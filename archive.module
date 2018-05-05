@@ -1,0 +1,20 @@
+<?php
+
+
+/**
+ * Модуль для работы с архивом
+ */
+function archive_menu()
+{
+    $items = array();
+    $items['archive/import'] = array(
+        'title' => 'Создание архива',
+        'description' => 'Создание архива',
+        'page callback' => 'archive_create',
+        'access arguments' => array('access content'),
+        'type' => MENU_CALLBACK,
+    );
+    return $items;
+}
+
+include 'archive_import.php';

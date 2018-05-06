@@ -14,6 +14,13 @@ function archive_menu()
         'access arguments' => array('administer archive module' ),
         'type' => MENU_CALLBACK,
     );
+    $items['archive/student/all'] = array(
+        'title' => 'Студенты',
+        'description' => 'Список студентов',
+        'page callback' => 'archive_all_students',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
     return $items;
 }
 
@@ -28,3 +35,4 @@ function archive_permission()
 }
 
 include 'archive_import.php';
+include 'archive_students.php';

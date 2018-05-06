@@ -91,11 +91,11 @@ CREATE TABLE IF NOT EXISTS `direction` (
 --
 
 CREATE TABLE IF NOT EXISTS `direction_member_SEC` (
-  `id_direction_mamber_SEC` int(11) NOT NULL,
+  `id_direction_member_SEC` int(11) NOT NULL,
   `id_member_SEC` int(11) NOT NULL REFERENCES `member_SEC`(`id_member_SEC`),
   `id_direction` int(11) NOT NULL REFERENCES `direction`(`id_direction`),
   `year` smallint(4) NOT NULL,
-  PRIMARY KEY (`id_direction_mamber_SEC`, `year`)
+  PRIMARY KEY (`id_direction_member_SEC`, `year`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 --
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS `group` (
   `size` smallint(2) unsigned DEFAULT NULL,
   `creation_year` year(4) DEFAULT NULL,
   `email` varchar(45) DEFAULT NULL,
-  `id_direction` int(11) NOT NULL REFERENCES `direction`(`id_direction`),
+  `id_direction` int(11) DEFAULT NULL REFERENCES `direction`(`id_direction`),
   `year` smallint(4) NOT NULL,
   PRIMARY KEY (`id_group`, `year`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
@@ -201,7 +201,6 @@ CREATE TABLE IF NOT EXISTS `reviewer` (
   `first_name` varchar(20) NOT NULL,
   `patronymic` varchar(45) NOT NULL,
   `degree` varchar(20) NOT NULL,
-  `phone` varchar(16) DEFAULT NULL,
   `email` varchar(45) DEFAULT NULL,
   `year` smallint(4) NOT NULL,
   PRIMARY KEY (`id_reviewer`, `year`)
@@ -243,7 +242,7 @@ CREATE TABLE IF NOT EXISTS `student_additional_section` (
   `id_student` int(11) NOT NULL REFERENCES `student`(`id_student`),
   `year` smallint(4) NOT NULL,
   PRIMARY KEY (`id_student_as`, `year`),
-    UNIQUE KEY `student` (`id_student`, `year`)
+    UNIQUE KEY `student` (`id_student`, `id_as`, `year`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 --
@@ -296,13 +295,13 @@ CREATE TABLE IF NOT EXISTS `teacher_student_diplom` (
   `id_teacher` int(11) NOT NULL REFERENCES `teacher`(`id_teacher`),
   `id_student` int(11) NOT NULL REFERENCES `student`(`id_student`),
   `id_theme` int(11) NOT NULL REFERENCES `diplom`(`id_diplom`),
-  `date_protect` date NOT NULL,
+  `date_protect` date DEFAULT NULL,
   `id_consultant_as` int(11) NOT NULL REFERENCES `consultant_as`(`id_consultant_as`),
   `teacher_evaluation` smallint(2) NOT NULL DEFAULT '0',
   `reviewer_evaluation` smallint(2) NOT NULL DEFAULT '0',
   `consultant_evaluation` smallint(2) NOT NULL DEFAULT '0',
   `final_evaluation` smallint(2) NOT NULL DEFAULT '0',
-  `percent_plagiat` smallint(3) NOT NULL DEFAULT '0',
+  `percent_originality` smallint(3) NOT NULL DEFAULT '0',
   `year` smallint(4) NOT NULL,
   PRIMARY KEY (`id_teacher_student_diplom`, `year`),
   UNIQUE KEY `student` (`id_student`, `year`)

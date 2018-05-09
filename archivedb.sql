@@ -111,10 +111,10 @@ CREATE TABLE IF NOT EXISTS `direction_teacher` (
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 --
--- Структура таблицы `group`
+-- Структура таблицы `stud_group`
 --
 
-CREATE TABLE IF NOT EXISTS `group` (
+CREATE TABLE IF NOT EXISTS `stud_group` (
   `id_group` int(11) NOT NULL,
   `group_number` smallint(4) unsigned NOT NULL,
   `size` smallint(2) unsigned DEFAULT NULL,
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS `group` (
 CREATE TABLE IF NOT EXISTS `group_teacher` (
   `id_group_teacher` int(11) NOT NULL,
   `id_teacher` int(11) NOT NULL REFERENCES `teacher`(`id_teacher`),
-  `id_group` int(11) NOT NULL REFERENCES `group`(`id_group`),
+  `id_group` int(11) NOT NULL REFERENCES `stud_group`(`id_group`),
   `year` smallint(4) NOT NULL,
   PRIMARY KEY (`id_group_teacher`, `year`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS `student` (
   `last_name` varchar(50) DEFAULT NULL,
   `first_name` varchar(30) DEFAULT NULL,
   `patronymic` varchar(50) DEFAULT NULL,
-  `id_group` int(11) DEFAULT NULL REFERENCES `group`(`id_group`),
+  `id_group` int(11) DEFAULT NULL REFERENCES `stud_group`(`id_group`),
   `email` varchar(45) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `enrollment_date` date DEFAULT NULL,

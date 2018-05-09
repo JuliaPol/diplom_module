@@ -193,7 +193,7 @@ function archive_import_form_submit($form, &$form_state)
         }
 
         foreach ($group as $value) {
-            db_insert('`group`')
+            db_insert('stud_group')
                 ->fields(array(
                     'id_group' => $value->idGroup,
                     'group_number' => $value->GroupNum,

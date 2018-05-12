@@ -68,7 +68,7 @@ function fill_table($form, $nodes, $header)
         $form['simple_table'][$nid]['last_name'] = array(
             '#type' => 'link',
             '#title' => t($node->last_name . ' ' . $node->first_name),
-            '#href' => 'archive/student/' . $node->id_student,
+            '#href' => 'archive/student?id=' . $node->id_student . '&year=' . date('Y', strtotime($node->date_protect)),
         );
         $form['simple_table'][$nid]['group_number'] = array(
             '#markup' => $node->group_number,
@@ -104,11 +104,6 @@ function get_years()
 function get_student_by_year($header, $year)
 {
     db_set_active('archive_db');
-
-//    $query = db_query("SELECT s.*, g.group_number AS group_number, d.direction_code AS direction_code,
-// d.direction_name AS direction_name, dip.* FROM student AS s LEFT OUTER JOIN `group` AS g ON g.id_group = s.id_group
-// AND g.`year` =s.`year` LEFT OUTER JOIN direction AS d ON g.id_direction = d.id_direction AND d.`year` = g.`year`
-//INNER JOIN teacher_student_diplom AS dip ON s.id_student = dip.id_student AND s.`year` =dip.`year` WHERE s.`year` =$year;");
     $query1 = db_select('student', 's')
         ->extend('PagerDefault')
         ->extend('TableSort');
@@ -146,7 +141,6 @@ function get_all_students($header)
         ->orderByHeader($header);
     $students = $query1->execute()
         ->fetchAll();
-
     db_set_active();
     return $students;
 }

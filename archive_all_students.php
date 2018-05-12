@@ -65,10 +65,11 @@ function fill_table($form, $nodes, $header)
     );
 
     foreach ($nodes as $nid => $node) {
+        $link = l( t($node->last_name . ' ' . $node->first_name), 'archive/student', array('query' =>
+            array('id' =>  $node->id_student, 'year' => date('Y', strtotime($node->date_protect)))));
+
         $form['simple_table'][$nid]['last_name'] = array(
-            '#type' => 'link',
-            '#title' => t($node->last_name . ' ' . $node->first_name),
-            '#href' => 'archive/student?id=' . $node->id_student . '&year=' . date('Y', strtotime($node->date_protect)),
+            '#markup' => $link,
         );
         $form['simple_table'][$nid]['group_number'] = array(
             '#markup' => $node->group_number,

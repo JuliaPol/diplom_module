@@ -48,7 +48,7 @@ function archive_all_students_dropdown_callback($form, $form_state)
 {
     $year = $form_state['complete form']['year']['#options'][$form_state['values']['year']];
 
-    $nodes = get_student_by_year($form['simple_table']['#header'], $year);
+    $nodes = get_students_by_year($form['simple_table']['#header'], $year);
 
     $form['simple_table'] = fill_table($form, $nodes, $form['simple_table']['#header']);
     return $form['simple_table'];
@@ -102,7 +102,80 @@ function get_years()
     return $years;
 }
 
-function get_student_by_year($header, $year)
+function get_students_by_evaluation($header, $year, $evaluation, $dir_code) {
+    db_set_active('archive_db');
+    $query1 = db_select('student', 's')
+        ->extend('PagerDefault')
+        ->extend('TableSort');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
+    $query1->innerJoin('teacher_student_diplom', 'dip', 's.id_student = dip.id_student AND s.`year` =dip.`year`');
+    $query1->fields('s')
+        ->fields('g', array('group_number'))
+        ->fields('d', array('direction_code', 'direction_name'))
+        ->fields('dip')
+        ->condition('d.direction_code', $dir_code)
+        ->condition('dip.final_evaluation', $evaluation)
+        ->condition('s.`year`', $year)
+        ->limit(10)
+        ->orderByHeader($header);
+    $students = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $students;
+}
+
+function get_students_by_teacher($header, $year, $teacher_id)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('student', 's')
+        ->extend('PagerDefault')
+        ->extend('TableSort');
+    $query1->innerJoin('teacher_student_diplom', 'dip', 's.id_student = dip.id_student AND s.`year` =dip.`year`');
+    $query1->leftJoin('teacher', 't', 't.id_teacher = dip.id_teacher AND t.`year` =dip.`year`');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
+    $query1->fields('s')
+        ->fields('g', array('group_number'))
+        ->fields('d', array('direction_code', 'direction_name'))
+        ->fields('dip')
+        ->condition('t.id_teacher', $teacher_id)
+        ->condition('s.`year`', $year)
+        ->limit(10)
+        ->orderByHeader($header);
+    $students = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $students;
+}
+
+function get_students_by_teacher_activity($header, $year, $teacher_activity)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('student', 's')
+        ->extend('PagerDefault')
+        ->extend('TableSort');
+    $query1->innerJoin('teacher_student_diplom', 'dip', 's.id_student = dip.id_student AND s.`year` =dip.`year`');
+    $query1->leftJoin('teacher', 't', 't.id_teacher = dip.id_teacher AND t.`year` =dip.`year`');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
+    $query1->leftJoin('teacher_activity','t_a', 't.id_teacher = t_a.id_teacher AND t.`year` = t_a.`year`');
+    $query1->leftJoin('activity', 'a', 'a.id_activity = t_a.id_activity AND a.`year` = t_a.`year`');
+    $query1->fields('s')
+        ->fields('g', array('group_number'))
+        ->fields('d', array('direction_code', 'direction_name'))
+        ->fields('dip')
+        ->condition('a.activity_name', $teacher_activity)
+        ->condition('s.`year`', $year)
+        ->limit(10)
+        ->orderByHeader($header);
+    $students = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $students;
+}
+
+function get_students_by_year($header, $year)
 {
     db_set_active('archive_db');
     $query1 = db_select('student', 's')
@@ -116,11 +189,10 @@ function get_student_by_year($header, $year)
         ->fields('d', array('direction_code', 'direction_name'))
         ->fields('dip', array('final_evaluation', 'date_protect'))
         ->condition('s.`year`', $year)
-        ->limit(5)
+        ->limit(10)
         ->orderByHeader($header);
     $students = $query1->execute()
         ->fetchAll();
-
     db_set_active();
     return $students;
 }
@@ -138,7 +210,7 @@ function get_all_students($header)
         ->fields('g', array('group_number'))
         ->fields('d', array('direction_code', 'direction_name'))
         ->fields('dip', array('final_evaluation', 'date_protect'))
-        ->limit(5)
+        ->limit(10)
         ->orderByHeader($header);
     $students = $query1->execute()
         ->fetchAll();

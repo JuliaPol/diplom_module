@@ -96,6 +96,7 @@ function get_years()
     $years = db_select('student', 's')
         ->fields('s', array('year'))
         ->groupBy('year')
+        ->orderBy('s.year', 'DESC')
         ->execute()
         ->fetchAll();
     db_set_active();

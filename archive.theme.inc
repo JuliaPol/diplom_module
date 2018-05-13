@@ -27,3 +27,30 @@ function theme_simple($vars) {
     $output .= drupal_render_children($form);
     return $output;
 }
+
+function theme_diploma($vars) {
+    $form = $vars['form'];
+    $rows = array();
+    foreach (element_children($form) as $id) {
+        if (isset($form[$id])) {
+            $rows[] = array(
+                'data' => array(
+                    drupal_render($form[$id]['group_number']),
+                    drupal_render($form[$id]['stud_name']),
+                    drupal_render($form[$id]['theme']),
+                    drupal_render($form[$id]['teacher_name']),
+                ),
+                'class' => array(),
+            );
+        }
+    }
+
+    $output = theme('table', array(
+        'header' => $form['#header'],
+        'rows'  => $rows,
+        'empty' => t('Table is empty', array()),
+    ));
+
+    $output .= drupal_render_children($form);
+    return $output;
+}

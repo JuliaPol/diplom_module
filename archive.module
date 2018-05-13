@@ -35,12 +35,23 @@ function archive_menu()
         'access arguments' => array('administer archive module' ),
         'type' => MENU_CALLBACK,
     );
+    $items['archive/diplomas'] = array(
+        'title' => 'Темы ВКР',
+        'description' => 'Темы ВКР',
+        'page callback' => 'archive_all_diplomas',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
     return $items;
 }
 
 function archive_theme() {
     return array(
         'simple' => array(
+            'render element' => 'form',
+            'file' => 'archive.theme.inc',
+        ),
+        'diploma' => array(
             'render element' => 'form',
             'file' => 'archive.theme.inc',
         ),
@@ -62,3 +73,4 @@ include 'archive_all_students.php';
 include 'archive_student.php';
 include 'archive_teacher.php';
 include 'archive.theme.inc';
+include 'archive_diploma.php';

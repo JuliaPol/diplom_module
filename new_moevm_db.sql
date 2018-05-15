@@ -1201,6 +1201,7 @@ CREATE TABLE IF NOT EXISTS `teacher_member_gak` (
   `id_teacher_member_gak` int(11) NOT NULL AUTO_INCREMENT,
   `id_teacher` int(11) NOT NULL,
   `id_direction` int(11) NOT NULL,
+  `role_teacher` VARCHAR(20) DEFAULT NULL,
   PRIMARY KEY (`id_teacher_member_gak`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 

@@ -50,15 +50,15 @@ function archive_import_form_submit($form, &$form_state)
     $direction_teacher = get_object_from_table('teacher_member_gak');
 
     $query = db_query('SELECT a.*, u.Direction FROM `group` AS a LEFT OUTER JOIN curriculum AS u 
-                              ON a.Curriculum = u.idCurriculum WHERE (a.CreationYear = '.($year - 4).' 
-                               OR a.CreationYear = '.($year - 6).');');
+                              ON a.Curriculum = u.idCurriculum WHERE (a.CreationYear = ' . ($year - 4) . ' 
+                               OR a.CreationYear = ' . ($year - 6) . ');');
     $group = $query->fetchAll();
 
     $group_teacher = get_object_from_table('demo_material_consultantion');
 
     $student = db_query('SELECT a.* FROM student AS a LEFT OUTER JOIN `group` AS u 
-                              ON a.Group = u.idGroup WHERE (u.CreationYear = '.($year - 4).' 
-                               OR u.CreationYear = '.($year - 6).' OR YEAR(a.ExpelDate) = '.$year.');');
+                              ON a.Group = u.idGroup WHERE (u.CreationYear = ' . ($year - 4) . ' 
+                               OR u.CreationYear = ' . ($year - 6) . ' OR YEAR(a.ExpelDate) = ' . $year . ');');
 
     $consultant_company = get_object_from_table('consultant_company');
     $consultant_student = get_object_from_table('student_consultant_company');
@@ -187,6 +187,7 @@ function archive_import_form_submit($form, &$form_state)
                     'id_direction_teacher' => $value->id_teacher_member_gak,
                     'id_teacher' => $value->id_teacher,
                     'id_direction' => $value->id_direction,
+                    'role_teacher' => $value->role_teacher,
                     'year' => $year,
                 ))
                 ->execute();

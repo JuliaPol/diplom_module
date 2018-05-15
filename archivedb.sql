@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS `direction_teacher` (
   `id_direction_teacher` int(11) NOT NULL,
   `id_teacher` int(11) NOT NULL REFERENCES `teacher`(`id_teacher`),
   `id_direction` int(11) NOT NULL REFERENCES `direction`(`id_direction`),
+  `role_teacher` VARCHAR(20) DEFAULT NULL,
   `year` smallint(4) NOT NULL,
   PRIMARY KEY (`id_direction_teacher`, `year`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;

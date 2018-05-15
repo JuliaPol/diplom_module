@@ -35,14 +35,29 @@ function archive_all_diplomas_page($form, &$form_state)
                 $form[$year->year][$nid]['theme_table'] = fill_diploma_table($form, $nodes, $header);
                 $form[$year->year][$nid]['pager']['#markup'] = theme('pager');
                 $directions[$nid]->nodes = $nodes;
+                $form[$year->year][$nid]['link'] = array(
+                    '#type' => 'button',
+                    '#title' => 'Скачать список тем',
+                    '#ajax' => array(
+                        'event' => 'click',
+                        'callback' => 'archive_diploma_link_callback',
+                        'method' => 'replace',
+                        'effect' => 'none',
+                        'arguments' => array($directions, $year->year),
+                    ),
+                );
             }
         }
-        create_doc_with_themes($year->year, $directions);
+//        create_doc_with_themes($year->year, $directions);
     }
-//    $nodes = get_all_themes();
-//
-//    $form['theme_table'] = fill_diploma_table($form, $nodes, $header);
     return $form;
+}
+
+//TODO: fix
+function archive_diploma_link_callback($directions, $year)
+{
+    create_doc_with_themes($year, $directions);
+    drupal_goto('archive/' . $year . '/list_themes_' . $year . '.docx');
 }
 
 function fill_diploma_table($form, $nodes, $header)

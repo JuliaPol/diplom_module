@@ -3,13 +3,28 @@ function get_teacher_by_id_archive($id, $year)
 {
     db_set_active('archive_db');
     $query1 = db_select('teacher', 't');
-   $query1->fields('t')
+    $query1->fields('t')
         ->condition('t.id_teacher', $id)
         ->condition('t.`year`', $year);
     $teacher = $query1->execute()
         ->fetchAll();
     db_set_active();
     return $teacher;
+}
+
+function get_teacher_by_passport_archive($passport)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('teacher', 't');
+    $query1->leftJoin('direction_teacher', 'd_t', 't.id_teacher = d_t.id_teacher AND t.`year` = d_t.`year`');
+    $query1->leftJoin('direction', 'd', 'd.id_direction = d_m.id_direction AND d.`year` = d_t.`year`');
+    $query1->fields('t')
+        ->fields('d', array('direction_code', 'direction_name'))
+        ->condition('t.passport', $passport);
+    $member = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $member;
 }
 
 function get_activities_by_id_teacher($id, $year)

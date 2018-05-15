@@ -42,6 +42,13 @@ function archive_menu()
         'access arguments' => array('administer archive module' ),
         'type' => MENU_CALLBACK,
     );
+    $items['archive/member_SEC'] = array(
+        'title' => 'Член ГЭК',
+        'description' => 'Член ГЭК',
+        'page callback' => 'archive_member_sec',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
     return $items;
 }
 
@@ -74,3 +81,4 @@ include 'archive_student.php';
 include 'archive_teacher.php';
 include 'archive.theme.inc';
 include 'archive_diploma.php';
+include 'archive_member_sec.php';

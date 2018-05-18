@@ -35,6 +35,20 @@ function archive_menu()
         'access arguments' => array('administer archive module' ),
         'type' => MENU_CALLBACK,
     );
+    $items['archive/reviewer'] = array(
+        'title' => 'Рецензент',
+        'description' => 'Рецензент',
+        'page callback' => 'archive_reviewer',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
+    $items['archive/reviewer/all'] = array(
+        'title' => 'Список рецензентов',
+        'description' => 'Список рецензентов',
+        'page callback' => 'archive_all_reviewers',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
     $items['archive/diplomas'] = array(
         'title' => 'Темы ВКР',
         'description' => 'Темы ВКР',
@@ -49,6 +63,13 @@ function archive_menu()
         'access arguments' => array('administer archive module' ),
         'type' => MENU_CALLBACK,
     );
+    $items['archive/additional_sections'] = array(
+        'title' => 'Дополнительные разделы',
+        'description' => 'Дополнительные разделы',
+        'page callback' => 'archive_additional_sections',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
     return $items;
 }
 
@@ -59,6 +80,14 @@ function archive_theme() {
             'file' => 'archive.theme.inc',
         ),
         'diploma' => array(
+            'render element' => 'form',
+            'file' => 'archive.theme.inc',
+        ),
+        'reviewers' => array(
+            'render element' => 'form',
+            'file' => 'archive.theme.inc',
+        ),
+        'section' => array(
             'render element' => 'form',
             'file' => 'archive.theme.inc',
         ),
@@ -82,3 +111,5 @@ include 'archive_teacher.php';
 include 'archive.theme.inc';
 include 'archive_diploma.php';
 include 'archive_member_sec.php';
+include 'archive_reviewer.php';
+include 'archive_additional_section.php';

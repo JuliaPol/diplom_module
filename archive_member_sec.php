@@ -13,6 +13,38 @@ function get_member_sec_by_id_archive($id, $year)
     return $member;
 }
 
+function get_all_chairs_by_id_archive()
+{
+    db_set_active('archive_db');
+    $query1 = db_select('member_sec', 'm');
+    $query1->leftJoin('direction_member_sec', 'd_m', 'm.id_member_SEC = d_m.id_member_SEC AND m.`year` = d_m.`year`');
+    $query1->leftJoin('direction', 'd', 'd.id_direction = d_m.id_direction AND d.`year` = d_m.`year`');
+    $query1->fields('m')
+        ->fields('d')
+        ->condition('m.role', 'Председатель');
+    $member = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $member;
+}
+
+function find_chair_by_id_archive($direction, $year)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('member_sec', 'm');
+    $query1->leftJoin('direction_member_sec', 'd_m', 'm.id_member_SEC = d_m.id_member_SEC AND m.`year` = d_m.`year`');
+    $query1->leftJoin('direction', 'd', 'd.id_direction = d_m.id_direction AND d.`year` = d_m.`year`');
+    $query1->fields('m')
+        ->fields('d')
+        ->condition('d.direction_code', $direction)
+        ->condition('m.role', 'Председатель')
+        ->condition('m.`year`', $year);
+    $member = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $member;
+}
+
 function get_member_sec_by_passport_archive($passport)
 {
     db_set_active('archive_db');

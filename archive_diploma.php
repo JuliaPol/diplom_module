@@ -34,30 +34,24 @@ function archive_all_diplomas_page($form, &$form_state)
                 $nodes = get_themes_by_year_and_direction($year->year, $direction->direction_code);
                 $form[$year->year][$nid]['theme_table'] = fill_diploma_table($form, $nodes, $header);
                 $form[$year->year][$nid]['pager']['#markup'] = theme('pager');
-                $directions[$nid]->nodes = $nodes;
+                $link = l(t('Скачать список тем'), 'archive/download/themes', array('query' =>
+                    array('year' => $year->year, 'dir_code' => $direction->direction_code)));
                 $form[$year->year][$nid]['link'] = array(
-                    '#type' => 'button',
-                    '#title' => 'Скачать список тем',
-                    '#ajax' => array(
-                        'event' => 'click',
-                        'callback' => 'archive_diploma_link_callback',
-                        'method' => 'replace',
-                        'effect' => 'none',
-                        'arguments' => array($directions, $year->year),
-                    ),
+                    '#markup' => $link
                 );
             }
         }
-//        create_doc_with_themes($year->year, $directions);
     }
     return $form;
 }
 
-//TODO: fix
-function archive_diploma_link_callback($directions, $year)
+function archive_download_themes_doc()
 {
-    create_doc_with_themes($year, $directions);
-    drupal_goto('archive/' . $year . '/list_themes_' . $year . '.docx');
+    if (isset($_GET['year']) && isset($_GET['dir_code'])) {
+        $direction = $_GET['dir_code'];
+        $nodes = get_themes_by_year_and_direction($_GET['year'], $direction);
+        create_doc_with_themes($_GET['year'], $nodes);
+    }
 }
 
 function fill_diploma_table($form, $nodes, $header)
@@ -162,7 +156,7 @@ function get_all_themes()
     return $themes;
 }
 
-function create_doc_with_themes($year, $directions)
+function create_doc_with_themes($year, $direction)
 {
     create_archive_folder($year);
     require_once '/sites/all/libraries/Classes/PHPWord.php';
@@ -178,28 +172,33 @@ function create_doc_with_themes($year, $directions)
     $PHPWord->addTableStyle('myOwnTableStyle', $styleTable1);
     $section = $PHPWord->createSection();
     $section->addText('Темы ВКР ' . $year . 'г.', 'rStyle', 'Center');
-    foreach ($directions as $direction) {
-        if (isset($direction->nodes)) {
-            $section->addText('Направление: ' . $direction->direction_code . ' - ' . $direction->direction_name, 'contentStyle', 'Justify');
-            $table = $section->addTable('myOwnTableStyle');
-            $table->addRow(900);
-            $table->addCell(500, $styleCell)->addText('№ Группа', $fontStyle);
-            $table->addCell(2000, $styleCell)->addText('Фамилия, имя, отчество', $fontStyle);
-            $table->addCell(3500, $styleCell)->addText('Тема ВКР', $fontStyle);
-            $table->addCell(2000, $styleCell)->addText('Руководитель', $fontStyle);
-            foreach ($direction->nodes as $node) {
-                $table->addRow(900);
-                $table->addCell(500, $styleCell)->addText($node->student[0]->group_number, $fontStyle);
-                $table->addCell(2000, $styleCell)->addText($node->student[0]->last_name . ' '
-                    . $node->student[0]->first_name . ' ' . $node->student[0]->patronymic, $fontStyle);
-                $table->addCell(3500, $styleCell)->addText($node->diplom_name, $fontStyle);
-                $table->addCell(2000, $styleCell)->addText($node->teacher[0]->last_name
-                    . ' ' . $node->teacher[0]->first_name . ' ' . $node->teacher[0]->patronymic, $fontStyle);
-            }
-        }
+
+    $section->addText('Направление: ' . $direction[0]->direction_code . ' - ' . $direction[0]->direction_name, 'contentStyle', 'Justify');
+    $table = $section->addTable('myOwnTableStyle');
+    $table->addRow(900);
+    $table->addCell(500, $styleCell)->addText('№ Группа', $fontStyle);
+    $table->addCell(2000, $styleCell)->addText('Фамилия, имя, отчество', $fontStyle);
+    $table->addCell(3500, $styleCell)->addText('Тема ВКР', $fontStyle);
+    $table->addCell(2000, $styleCell)->addText('Руководитель', $fontStyle);
+    foreach ($direction as $node) {
+        $table->addRow(900);
+        $table->addCell(500, $styleCell)->addText($node->student[0]->group_number, $fontStyle);
+        $table->addCell(2000, $styleCell)->addText($node->student[0]->last_name . ' '
+            . $node->student[0]->first_name . ' ' . $node->student[0]->patronymic, $fontStyle);
+        $table->addCell(3500, $styleCell)->addText($node->diplom_name, $fontStyle);
+        $table->addCell(2000, $styleCell)->addText($node->teacher[0]->last_name
+            . ' ' . $node->teacher[0]->first_name . ' ' . $node->teacher[0]->patronymic, $fontStyle);
     }
     $objWriter = PHPWord_IOFactory::createWriter($PHPWord, 'Word2007');
-    $objWriter->save('archive/' . $year . '/list_themes_' . $year . '.docx');
+    $file = 'archive/' . $year . '/list_themes_' . $direction[0]->direction_code . '_' . $year . '.docx';
+    $objWriter->save($file);
+    header("Cache-Control: public");
+    header("Content-Description: File Transfer");
+    header("Content-Disposition: attachment; filename=list_themes_"
+        . $direction[0]->direction_code . "_" . $year . ".docx");
+    header("Content-Type: application/zip");
+    header("Content-Transfer-Encoding: binary");
+    readfile($file);
 }
 
 function create_archive_folder($year)

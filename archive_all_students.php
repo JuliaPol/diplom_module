@@ -78,6 +78,20 @@ function archive_all_students_page($form, &$form_state)
             'effect' => 'fade',
         ),
     );
+//
+//    $form['selects']['all'] = array(
+//        '#type' => 'button',
+//        '#title' => t('Очистить фильтры'),
+//        '#prefix' => '<div style="padding: 10px; margin-right: 5px;">',
+//        '#suffix' => '</div>',
+//        '#ajax' => array(
+//            'event' => 'click',
+//            'callback' => 'archive_all_students_dropdown_callback',
+//            'wrapper' => 'student-wrapper',
+//            'method' => 'replace',
+//            'effect' => 'fade',
+//        ),
+//    );
 
     $header = array(
         array('data' => t('ФИО'), 'field' => 's.last_name'),
@@ -96,6 +110,16 @@ function archive_all_students_page($form, &$form_state)
     $form['pager']['#markup'] = theme('pager');
     return $form;
 }
+//
+//function archive_show_all_students_dropdown_callback($form, $form_state)
+//{
+//    $form['selects']['year']['#value'] = 0;
+//    $form['selects']['direction']['#value'] = 0;
+//    $form['selects']['eval']['#value'] = 0;
+//    $nodes = get_students_archive($form['simple_table']['#header'], 99, 99, 99);
+//    $form['simple_table'] = fill_table($form, $nodes, $form['simple_table']['#header']);
+//    return $form;
+//}
 
 function archive_all_students_dropdown_callback($form, $form_state)
 {
@@ -276,6 +300,29 @@ function get_all_students($header)
         ->fields('dip', array('final_evaluation', 'date_protect'))
         ->limit(10)
         ->orderByHeader($header);
+    $students = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $students;
+}
+
+function get_students_by_additional_section($year, $additional_section, $department)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('student', 's');
+    $query1->innerJoin('teacher_student_diplom', 'dip', 's.id_student = dip.id_student AND s.`year` =dip.`year`');
+    $query1->leftJoin('teacher', 't', 't.id_teacher = dip.id_teacher AND t.`year` =dip.`year`');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
+    $query1->leftJoin('student_additional_section', 's_a_s', 's.id_student = s_a_s.id_student AND s.`year` = s_a_s.`year`');
+    $query1->leftJoin('additional_section', 'a_s', 'a_s.id_additional_section = s_a_s.id_as AND a_s.`year` = s_a_s.`year`');
+    $query1->fields('s')
+        ->fields('g', array('group_number'))
+        ->fields('d', array('direction_code', 'direction_name'))
+        ->fields('dip')
+        ->condition('a_s.name_section', $additional_section)
+        ->condition('a_s.name_department', $department)
+        ->condition('s.`year`', $year);
     $students = $query1->execute()
         ->fetchAll();
     db_set_active();

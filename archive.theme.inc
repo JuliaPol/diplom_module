@@ -93,7 +93,8 @@ function theme_section($vars) {
                     drupal_render($form[$id]['year']),
                     drupal_render($form[$id]['section']),
                     drupal_render($form[$id]['department']),
-                    drupal_render($form[$id]['name'])
+                    drupal_render($form[$id]['name']),
+                    drupal_render($form[$id]['count'])
                 ),
                 'class' => array(),
             );

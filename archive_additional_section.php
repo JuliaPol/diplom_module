@@ -35,6 +35,10 @@ function archive_additional_sections_page($form, &$form_state)
 
     $form['section_table'] = fill_table_sections($form, $nodes, $header);
     $form['pager']['#markup'] = theme('pager');
+    $link = l(t("Скачать статистику за все года"), 'archive/download/statistics/additional_section');
+    $form['download'] = array(
+        '#markup' => $link,
+    );
     return $form;
 }
 
@@ -53,26 +57,33 @@ function fill_table_sections($form, $nodes, $header)
         $link = l(t($node->last_name . ' ' . $node->first_name . ' ' . $node->patronymic), 'archive/consultant_as', array('query' =>
             array('id' => $node->id_consultant_as, 'year' => $node->year)));
 
+        $link_section = l(t($node->name_section), 'archive/download/additional_section', array('query' =>
+            array('year' => $node->year, 'section' => $node->name_section, 'department' => $node->name_department)));
+
+        $link_department = l(t($node->name_department), 'archive/download/department/additional_sections', array('query' =>
+            array('year' => $node->year, 'department' => $node->name_department)));
+
         $form['section_table'][$nid]['year'] = array(
             '#markup' => $node->year,
         );
         $form['section_table'][$nid]['section'] = array(
-            '#markup' => $node->name_section,
+            '#markup' => $link_section,
         );
         $form['section_table'][$nid]['department'] = array(
-            '#markup' => $node->name_department,
+            '#markup' => $link_department,
         );
         $form['section_table'][$nid]['name'] = array(
             '#markup' => $link,
         );
         $form['section_table'][$nid]['count'] = array(
-            '#markup' => count(array($students)),
+            '#markup' => count((array)$students),
         );
     }
     return $form['section_table'];
 }
 
-function get_additional_sections_archive($year) {
+function get_additional_sections_archive($year)
+{
     db_set_active('archive_db');
     $query1 = db_select('additional_section', 'a_s');
     $query1->leftJoin('consultant_as', 'c_a_s', 'c_a_s.id_additional_section = a_s.id_additional_section AND a_s.`year` = c_a_s.`year`');
@@ -85,7 +96,36 @@ function get_additional_sections_archive($year) {
     return $section;
 }
 
-function get_all_additional_sections_archive() {
+function get_additional_sections_by_department_archive($year, $department)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('additional_section', 'a_s');
+    $query1->leftJoin('consultant_as', 'c_a_s', 'c_a_s.id_additional_section = a_s.id_additional_section AND a_s.`year` = c_a_s.`year`');
+    $query1->fields('a_s')
+        ->fields('c_a_s')
+        ->condition('a_s.name_department', $department)
+        ->condition('a_s.`year`', $year);
+    $section = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $section;
+}
+
+function get_all_departments_archive()
+{
+    db_set_active('archive_db');
+    $query1 = db_select('additional_section', 'a_s');
+    $query1->fields('a_s')
+        ->orderBy('a_s.year', 'DESC')
+        ->groupBy('a_s.name_department');
+    $departments = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $departments;
+}
+
+function get_all_additional_sections_archive()
+{
     db_set_active('archive_db');
     $query1 = db_select('additional_section', 'a_s');
     $query1->leftJoin('consultant_as', 'c_a_s', 'c_a_s.id_additional_section = a_s.id_additional_section AND a_s.`year` = c_a_s.`year`');
@@ -96,4 +136,148 @@ function get_all_additional_sections_archive() {
         ->fetchAll();
     db_set_active();
     return $sections;
+}
+
+function download_list_students_with_additional_sections_on_department()
+{
+    create_doc_with_additional_sections_on_department($_GET['year'], $_GET['department']);
+}
+
+function download_list_students_with_additional_section()
+{
+    create_doc_with_additional_section($_GET['year'], $_GET['section'], $_GET['department']);
+}
+
+function create_doc_with_additional_sections_on_department($year, $department)
+{
+    create_archive_folder($year);
+    $add_sections = get_additional_sections_by_department_archive($year, $department);
+    require_once '/sites/all/libraries/Classes/PHPWord.php';
+    $PHPWord = new PHPWord();
+    $PHPWord->setDefaultFontName('Times New Roman');
+    $PHPWord->addFontStyle('rStyle', array('bold' => true, 'size' => 16));
+    $PHPWord->addFontStyle('contentStyle', array('size' => 12));
+    $PHPWord->addParagraphStyle('Center', array('align' => 'center'));
+    $PHPWord->addParagraphStyle('Justify', array('align' => 'both'));
+    $styleTable1 = array('borderSize' => 6, 'borderColor' => '0f0', 'cellMargin' => 80);
+    $styleCell = array('valign' => 'center');
+    $fontStyle = array('align' => 'center');
+    $PHPWord->addTableStyle('myOwnTableStyle', $styleTable1);
+    $section = $PHPWord->createSection();
+    $section->addText('Кафедра ' . $department, 'rStyle', 'Center');
+    $section->addText('Год ' . $year . 'г.', 'rStyle', 'Center');
+
+    foreach ($add_sections as $add_section) {
+        $section->addText('Дополнительный раздел: ' . $add_section->name_section, 'contentStyle', 'Justify');
+        $section->addText('Консультант: ' . $add_section->last_name . ' ' . $add_section->first_name . ' ' .
+            $add_section->patronymic, 'contentStyle', 'Justify');
+        $table = $section->addTable('myOwnTableStyle');
+        $table->addRow(900);
+        $table->addCell(2500, $styleCell)->addText('Направление', $fontStyle);
+        $table->addCell(500, $styleCell)->addText('№ Группа', $fontStyle);
+        $table->addCell(2000, $styleCell)->addText('Фамилия, имя, отчество', $fontStyle);
+        $students = get_students_by_additional_section($year, $add_section->name_section, $department);
+        foreach ($students as $node) {
+            $table->addRow(900);
+            $table->addCell(2500, $styleCell)->addText($node->direction_code . ' - ' . $node->direction_name, $fontStyle);
+            $table->addCell(500, $styleCell)->addText($node->group_number, $fontStyle);
+            $table->addCell(2000, $styleCell)->addText($node->last_name . ' '
+                . $node->first_name . ' ' . $node->patronymic, $fontStyle);
+        }
+    }
+
+    $objWriter = PHPWord_IOFactory::createWriter($PHPWord, 'Word2007');
+    $file = 'archive/' . $year . '/department_' . $department . '_' . $year . '.docx';
+    $objWriter->save($file);
+    header("Cache-Control: public");
+    header("Content-Description: File Transfer");
+    header("Content-Disposition: attachment; filename=department_"
+        . $department . "_" . $year . ".docx");
+    header("Content-Type: application/zip; charset=UTF-8");
+    header("Content-Transfer-Encoding: binary");
+    readfile($file);
+}
+
+function create_doc_with_additional_section($year, $add_section, $department)
+{
+    create_archive_folder($year);
+    require_once '/sites/all/libraries/Classes/PHPWord.php';
+    $PHPWord = new PHPWord();
+    $PHPWord->setDefaultFontName('Times New Roman');
+    $PHPWord->addFontStyle('rStyle', array('bold' => true, 'size' => 16));
+    $PHPWord->addFontStyle('contentStyle', array('size' => 12));
+    $PHPWord->addParagraphStyle('Center', array('align' => 'center'));
+    $PHPWord->addParagraphStyle('Justify', array('align' => 'both'));
+    $styleTable1 = array('borderSize' => 6, 'borderColor' => '0f0', 'cellMargin' => 80);
+    $styleCell = array('valign' => 'center');
+    $fontStyle = array('align' => 'center');
+    $PHPWord->addTableStyle('myOwnTableStyle', $styleTable1);
+    $section = $PHPWord->createSection();
+    $section->addText('Кафедра ' . $department, 'rStyle', 'Center');
+    $section->addText('Год ' . $year . 'г.', 'rStyle', 'Center');
+
+    $consultant = get_consultant_by_additional_sections_archive($year, $add_section, $department);
+    $section->addText('Дополнительный раздел: ' . $consultant[0]->name_section, 'contentStyle', 'Justify');
+    $section->addText('Консультант: ' . $consultant[0]->last_name . ' ' . $consultant[0]->first_name . ' ' .
+        $consultant[0]->patronymic, 'contentStyle', 'Justify');
+    $table = $section->addTable('myOwnTableStyle');
+    $table->addRow(900);
+    $table->addCell(2500, $styleCell)->addText('Направление', $fontStyle);
+    $table->addCell(500, $styleCell)->addText('№ Группа', $fontStyle);
+    $table->addCell(2000, $styleCell)->addText('Фамилия, имя, отчество', $fontStyle);
+    $students = get_students_by_additional_section($year, $add_section, $department);
+    foreach ($students as $node) {
+        $table->addRow(900);
+        $table->addCell(2500, $styleCell)->addText($node->direction_code . ' - ' . $node->direction_name, $fontStyle);
+        $table->addCell(500, $styleCell)->addText($node->group_number, $fontStyle);
+        $table->addCell(2000, $styleCell)->addText($node->last_name . ' '
+            . $node->first_name . ' ' . $node->patronymic, $fontStyle);
+    }
+
+
+    $objWriter = PHPWord_IOFactory::createWriter($PHPWord, 'Word2007');
+    $file = 'archive/' . $year . '/additional_section_' . $add_section . '_' . $year . '.docx';
+    $objWriter->save($file);
+    header("Cache-Control: public");
+    header("Content-Description: File Transfer");
+    header("Content-Disposition: attachment; filename=additional_section_"
+        . $add_section . "_" . $year . ".docx");
+    header("Content-Type: application/zip; charset=UTF-8");
+    header("Content-Transfer-Encoding: binary");
+    readfile($file);
+}
+
+function create_excel_report()
+{
+    require_once '/sites/all/libraries/Classes/PHPExcel.php';
+    $PHPExcel = new PHPExcel();
+    $PHPExcel->setActiveSheetIndex(0);
+    $sheet = $PHPExcel->getActiveSheet();
+    $sheet->setTitle('Дополнительные разделы');
+
+    $years = get_years();
+    $departments = get_all_departments_archive();
+    $sections = get_all_additional_sections_archive();
+
+    $i = 2;
+    foreach ($years as $year) {
+        $sheet->setCellValueByColumnAndRow($i, 0, $year->year);
+        $i++;
+    }
+
+
+//// Выравнивание текста
+//    $sheet->getStyle('A1')->getAlignment()->setHorizontal(
+//        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+
+
+    $objWriter = new PHPExcel_Writer_Excel2007($PHPExcel);
+    $file = 'archive/additional_sections.xlsx';
+    $objWriter->save($file);
+    header("Cache-Control: public");
+    header("Content-Description: File Transfer");
+    header("Content-Disposition: attachment; filename=additional_sections.xlsx");
+    header("Content-Type: application/vnd.ms-excel; charset=UTF-8");
+    header("Content-Transfer-Encoding: binary");
+    readfile($file);
 }

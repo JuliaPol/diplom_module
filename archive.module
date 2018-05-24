@@ -74,7 +74,25 @@ function archive_menu()
         'title' => 'Скачать список тем ВКР',
         'description' => 'Скачать список тем ВКР',
         'page callback'=>'archive_download_themes_doc',
-        'access arguments' => array ('access content' ),
+        'access arguments' => array ('administer archive module' ),
+        'type' => MENU_CALLBACK );
+    $items ['archive/download/department/additional_sections'] = array (
+        'title' => 'Скачать список студентов с доп разделом на кафедре',
+        'description' => 'Скачать список студентов с доп разделом на кафедре',
+        'page callback'=>'download_list_students_with_additional_sections_on_department',
+        'access arguments' => array ('administer archive module' ),
+        'type' => MENU_CALLBACK );
+    $items ['archive/download/additional_section'] = array (
+        'title' => 'Скачать список студентов с доп разделом',
+        'description' => 'Скачать список студентов с доп разделом',
+        'page callback'=>'download_list_students_with_additional_section',
+        'access arguments' => array ('administer archive module' ),
+        'type' => MENU_CALLBACK );
+    $items ['archive/download/statistics/additional_section'] = array (
+        'title' => 'Скачать статистику по доп разделам',
+        'description' => 'Скачать статистику по доп разделам',
+        'page callback'=>'create_excel_report',
+        'access arguments' => array ('administer archive module' ),
         'type' => MENU_CALLBACK );
     return $items;
 }
@@ -119,3 +137,4 @@ include 'archive_diploma.php';
 include 'archive_member_sec.php';
 include 'archive_reviewer.php';
 include 'archive_additional_section.php';
+include 'archive_consultant.php';

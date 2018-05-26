@@ -94,6 +94,12 @@ function archive_menu()
         'page callback'=>'create_excel_report',
         'access arguments' => array ('administer archive module' ),
         'type' => MENU_CALLBACK );
+    $items ['archive/download/statistics/reviewers'] = array (
+        'title' => 'Скачать статистику по рецензентам',
+        'description' => 'Скачать статистику по рецензентам',
+        'page callback'=>'create_excel_report_for_reviewers',
+        'access arguments' => array ('administer archive module' ),
+        'type' => MENU_CALLBACK );
     return $items;
 }
 

@@ -113,6 +113,10 @@ function archive_all_reviewers_page($form, &$form_state)
 
     $form['reviewers_table'] = fill_table_reviewers($form, $nodes, $header);
     $form['pager']['#markup'] = theme('pager');
+    $link = l(t("Скачать статистику за все года"), 'archive/download/statistics/reviewers');
+    $form['download'] = array(
+        '#markup' => $link,
+    );
     return $form;
 }
 
@@ -186,8 +190,8 @@ function get_years_with_reviewer_archive()
 {
     db_set_active('archive_db');
     $query1 = db_select('reviewer', 'r');
-    $query1->leftJoin('reviewer_student', 'r_s', 'r.id_reviewer = r_s.id_reviewer AND r.`year` = r_s.`year`');
-    $query1->leftJoin('student', 's', 's.id_student = r_s.id_student AND s.`year` = r_s.`year`');
+    $query1->innerJoin('reviewer_student', 'r_s', 'r.id_reviewer = r_s.id_reviewer AND r.`year` = r_s.`year`');
+    $query1->innerJoin('student', 's', 's.id_student = r_s.id_student AND s.`year` = r_s.`year`');
     $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
     $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
     $query1->fields('r')
@@ -202,8 +206,8 @@ function get_all_reviewers_archive()
 {
     db_set_active('archive_db');
     $query1 = db_select('reviewer', 'r');
-    $query1->leftJoin('reviewer_student', 'r_s', 'r.id_reviewer = r_s.id_reviewer AND r.`year` = r_s.`year`');
-    $query1->leftJoin('student', 's', 's.id_student = r_s.id_student AND s.`year` = r_s.`year`');
+    $query1->innerJoin('reviewer_student', 'r_s', 'r.id_reviewer = r_s.id_reviewer AND r.`year` = r_s.`year`');
+    $query1->innerJoin('student', 's', 's.id_student = r_s.id_student AND s.`year` = r_s.`year`');
     $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
     $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
     $query1->fields('r')
@@ -228,4 +232,69 @@ function get_count_reviews_by_id($id, $year)
     $num_of_results = $query2->execute()->rowCount();
     db_set_active();
     return $num_of_results;
+}
+
+function create_excel_report_for_reviewers()
+{
+    require_once '/sites/all/libraries/Classes/PHPExcel.php';
+    require_once('/sites/all/libraries/Classes/PHPExcel/Writer/Excel5.php');
+    $PHPExcel = new PHPExcel();
+    $PHPExcel->setActiveSheetIndex(0);
+    $sheet = $PHPExcel->getActiveSheet();
+    $sheet->setTitle('Рецензенты');
+
+    $years = get_years();
+    $directions = get_all_directions_archive();
+
+    $count_year = count((array)$years);
+    $sheet->setCellValueByColumnAndRow(1, 1, 'Количество рецензентов');
+    $sheet->mergeCellsByColumnAndRow(1, 1, $count_year, 1);
+    $sheet->getStyleByColumnAndRow(1, 1)->getAlignment()->setHorizontal(
+        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValueByColumnAndRow($count_year + 1, 1, 'Количество рецензий');
+    $sheet->mergeCellsByColumnAndRow($count_year + 1, 1, 2 * $count_year, 1);
+    $sheet->getStyleByColumnAndRow($count_year + 1, 1)->getAlignment()->setHorizontal(
+        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+
+    $sheet->getColumnDimension('A')->setAutoSize(true);
+    for ($i = 0; $i <= 2*$count_year; $i++) {
+        $sheet->getColumnDimensionByColumn($i)->setWidth(30);
+    }
+
+    $i = 1;
+    for ($x = 0; $x < 2; $x++) {
+        foreach ($years as $year) {
+            $sheet->setCellValueByColumnAndRow($i, 2, $year->year);
+            $i++;
+        }
+    }
+    $i = 3;
+    foreach ($directions as $direction) {
+        $sheet->setCellValueByColumnAndRow(0, $i, $direction->direction_code . ' - ' . $direction->direction_name);
+        $j = 1;
+        foreach ($years as $year) {
+            $reviewers = get_reviewer_by_direction_archive($direction->direction_code, $year->year);
+            $sheet->setCellValueByColumnAndRow($j, $i, count((array)$reviewers));
+            $count_review = 0;
+            foreach ($reviewers as $reviewer) {
+                $count_review += get_count_reviews_by_id($reviewer->id_reviewer, $year->year);
+            }
+            $sheet->setCellValueByColumnAndRow($j + $count_year, $i, count((array)$reviewers));
+            $j++;
+        }
+        $i++;
+    }
+
+
+    // Выводим HTTP-заголовки
+    header("Cache-Control: no-cache, must-revalidate");
+    header("Pragma: no-cache");
+    header("Content-type: application/vnd.ms-excel; charset=utf-8");
+    header("Content-Disposition: attachment; filename=reviewers.xls");
+
+    $objWriter = new PHPExcel_Writer_Excel5($PHPExcel);
+    $file = 'archive/reviewers.xls';
+    $objWriter->save($file);
+
+
 }

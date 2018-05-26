@@ -234,6 +234,23 @@ function get_count_reviews_by_id($id, $year)
     return $num_of_results;
 }
 
+function get_count_reviews_with_evaluation_by_id($id, $year, $evaluation)
+{
+    db_set_active('archive_db');
+    $query2 = db_select('student', 's');
+    $query2->leftJoin('reviewer_student', 'r_s', 's.id_student = r_s.id_student AND s.`year` = r_s.`year`');
+    $query2->leftJoin('reviewer', 'r', 'r.id_reviewer = r_s.id_reviewer AND r.`year` = r_s.`year`');
+    $query2->leftJoin('teacher_student_diplom', 'd', 's.id_student = d.id_student AND s.`year` = d.`year`');
+    $query2->fields('r')
+        ->condition('r.id_reviewer', $id)
+        ->condition('r.`year`', $year)
+        ->condition('d.reviewer_evaluation', $evaluation)
+        ->execute();
+    $num_of_results = $query2->execute()->rowCount();
+    db_set_active();
+    return $num_of_results;
+}
+
 function create_excel_report_for_reviewers()
 {
     require_once '/sites/all/libraries/Classes/PHPExcel.php';
@@ -255,14 +272,18 @@ function create_excel_report_for_reviewers()
     $sheet->mergeCellsByColumnAndRow($count_year + 1, 1, 2 * $count_year, 1);
     $sheet->getStyleByColumnAndRow($count_year + 1, 1)->getAlignment()->setHorizontal(
         PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValueByColumnAndRow(2 * $count_year + 1, 1, 'Количество рецензий с оценкой 5');
+    $sheet->mergeCellsByColumnAndRow(2 * $count_year + 1, 1, 3 * $count_year, 1);
+    $sheet->getStyleByColumnAndRow(2 * $count_year + 1, 1)->getAlignment()->setHorizontal(
+        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 
     $sheet->getColumnDimension('A')->setAutoSize(true);
-    for ($i = 0; $i <= 2*$count_year; $i++) {
-        $sheet->getColumnDimensionByColumn($i)->setWidth(30);
+    for ($i = 0; $i <= 3 * $count_year; $i++) {
+        $sheet->getColumnDimensionByColumn($i)->setWidth(20);
     }
 
     $i = 1;
-    for ($x = 0; $x < 2; $x++) {
+    for ($x = 0; $x < 3; $x++) {
         foreach ($years as $year) {
             $sheet->setCellValueByColumnAndRow($i, 2, $year->year);
             $i++;
@@ -276,10 +297,13 @@ function create_excel_report_for_reviewers()
             $reviewers = get_reviewer_by_direction_archive($direction->direction_code, $year->year);
             $sheet->setCellValueByColumnAndRow($j, $i, count((array)$reviewers));
             $count_review = 0;
+            $count_5 = 0;
             foreach ($reviewers as $reviewer) {
                 $count_review += get_count_reviews_by_id($reviewer->id_reviewer, $year->year);
+                $count_5 += get_count_reviews_with_evaluation_by_id($reviewer->id_reviewer, $year->year, 5);
             }
-            $sheet->setCellValueByColumnAndRow($j + $count_year, $i, count((array)$reviewers));
+            $sheet->setCellValueByColumnAndRow($j + $count_year, $i, $count_review);
+            $sheet->setCellValueByColumnAndRow($j + 2 * $count_year, $i, $count_5);
             $j++;
         }
         $i++;

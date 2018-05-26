@@ -12,6 +12,7 @@ function archive_all_diplomas_page($form, &$form_state)
         array('data' => t('ФИО'), 'field' => 'stud_name'),
         array('data' => t('Тема ВКР'), 'field' => 'theme'),
         array('data' => t('Руководитель'), 'field' => 'teacher_name'),
+        array('data' => t('Консультант с предприятия'), 'field' => 'consultant'),
     );
 
     $years = get_years();
@@ -82,6 +83,13 @@ function fill_diploma_table($form, $nodes, $header)
             $form['theme_table'][$nid]['teacher_name'] = array(
                 '#markup' => $link_teacher
             );
+            if (isset($node->consultant[0])) {
+                $link_consultant = l(t($node->consultant[0]->last_name . ' ' . $node->consultant[0]->first_name . ' ' . $node->consultant[0]->patronymic),
+                    'archive/consultant_company', array('query' => array('id' => $node->consultant[0]->id_consultant_company, 'year' => $node->year)));
+                $form['theme_table'][$nid]['consultant'] = array(
+                    '#markup' => $link_consultant
+                );
+            }
         }
     }
     return $form['theme_table'];
@@ -109,6 +117,7 @@ function get_themes_by_year_and_direction($year, $direction)
     foreach ($themes as $nid => $value) {
         $themes[$nid]->teacher = get_teacher_by_id_archive($value->id_teacher, $value->year);
         $themes[$nid]->student = get_student_by_id_archive($value->id_student, $value->year);
+        $themes[$nid]->consultant = get_consultant_from_company_by_student_id($value->id_student, $value->year);
     }
     db_set_active();
     return $themes;
@@ -180,6 +189,8 @@ function create_doc_with_themes($year, $direction)
     $table->addCell(2000, $styleCell)->addText('Фамилия, имя, отчество', $fontStyle);
     $table->addCell(3500, $styleCell)->addText('Тема ВКР', $fontStyle);
     $table->addCell(2000, $styleCell)->addText('Руководитель', $fontStyle);
+    $table->addCell(2000, $styleCell)->addText('Консультант с предприятия', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('Дополнительный раздел', $fontStyle);
     foreach ($direction as $node) {
         $table->addRow(900);
         $table->addCell(500, $styleCell)->addText($node->student[0]->group_number, $fontStyle);
@@ -188,6 +199,9 @@ function create_doc_with_themes($year, $direction)
         $table->addCell(3500, $styleCell)->addText($node->diplom_name, $fontStyle);
         $table->addCell(2000, $styleCell)->addText($node->teacher[0]->last_name
             . ' ' . $node->teacher[0]->first_name . ' ' . $node->teacher[0]->patronymic, $fontStyle);
+        $table->addCell(2000, $styleCell)->addText($node->consultant[0]->last_name
+            . ' ' . $node->consultant[0]->first_name . ' ' . $node->consultant[0]->patronymic, $fontStyle);
+        $table->addCell(1500, $styleCell)->addText($node->student[0]->name_section, $fontStyle);
     }
     $objWriter = PHPWord_IOFactory::createWriter($PHPWord, 'Word2007');
     $file = 'archive/' . $year . '/list_themes_' . $direction[0]->direction_code . '_' . $year . '.docx';

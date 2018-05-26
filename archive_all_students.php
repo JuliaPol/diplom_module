@@ -328,3 +328,26 @@ function get_students_by_additional_section($year, $additional_section, $departm
     db_set_active();
     return $students;
 }
+
+function get_students_by_consultant($year, $consultant_company)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('student', 's');
+    $query1->leftJoin('teacher_student_diplom', 'dip', 's.id_student = dip.id_student AND s.`year` =dip.`year`');
+    $query1->leftJoin('diplom', 'th', 'th.id_diplom = dip.id_theme AND th.`year` =dip.`year`');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
+    $query1->leftJoin('consultant_student', 'c_s', 's.id_student = c_s.id_student AND c_s.`year` = s.`year`');
+    $query1->leftJoin('consultant_company', 'c_c', 'c_c.id_consultant_company = c_s.id_consultant AND c_s.`year` = c_c.`year`');
+    $query1->fields('s')
+        ->fields('g', array('group_number'))
+        ->fields('d', array('direction_code', 'direction_name'))
+        ->fields('dip')
+        ->fields('th')
+        ->condition('c_c.id_consultant_company', $consultant_company)
+        ->condition('s.`year`', $year);
+    $students = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $students;
+}

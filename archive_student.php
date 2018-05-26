@@ -317,7 +317,7 @@ function archive_student_page($form, &$form_state)
             '#title' => t('Консультант с предприятия'),
             '#size' => 40,
             '#disabled' => TRUE,
-            '#href' => 'archive/consultant?id=' . $consultant[0]->id_consultant . '&year=' . date('Y', strtotime($student[0]->year)),
+            '#href' => 'archive/consultant?id=' . $consultant[0]->id_consultant_company . '&year=' . date('Y', strtotime($student[0]->year)),
             '#default_value' => $consultant[0]->last_name . ' ' . $consultant[0]->first_name . ' ' . $consultant[0]->patronymic,
         );
 

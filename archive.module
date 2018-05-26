@@ -100,6 +100,18 @@ function archive_menu()
         'page callback'=>'create_excel_report_for_reviewers',
         'access arguments' => array ('administer archive module' ),
         'type' => MENU_CALLBACK );
+    $items ['archive/consultant_company'] = array (
+        'title' => 'Консультант с предприятия',
+        'description' => 'Консультант с предприятия',
+        'page callback'=>'archive_consultant_company',
+        'access arguments' => array ('administer archive module' ),
+        'type' => MENU_CALLBACK );
+    $items ['archive/consultants_company/all'] = array (
+        'title' => 'Список консультантов с предприятия',
+        'description' => 'Список консультантов с предприятия',
+        'page callback'=>'archive_all_consultants_company',
+        'access arguments' => array ('administer archive module' ),
+        'type' => MENU_CALLBACK );
     return $items;
 }
 
@@ -118,6 +130,14 @@ function archive_theme() {
             'file' => 'archive.theme.inc',
         ),
         'section' => array(
+            'render element' => 'form',
+            'file' => 'archive.theme.inc',
+        ),
+        'consultants' => array(
+            'render element' => 'form',
+            'file' => 'archive.theme.inc',
+        ),
+        'students_by_consultant' => array(
             'render element' => 'form',
             'file' => 'archive.theme.inc',
         ),

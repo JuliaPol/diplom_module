@@ -138,6 +138,20 @@ function get_all_additional_sections_archive()
     return $sections;
 }
 
+function get_all_additional_sections_sorted_archive()
+{
+    db_set_active('archive_db');
+    $query1 = db_select('additional_section', 'a_s');
+    $query1->fields('a_s')
+        ->orderBy('a_s.name_department')
+        ->orderBy('a_s.name_section')
+        ->orderBy('a_s.year', 'DESC');
+    $sections = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $sections;
+}
+
 function download_list_students_with_additional_sections_on_department()
 {
     create_doc_with_additional_sections_on_department($_GET['year'], $_GET['department']);
@@ -250,34 +264,64 @@ function create_doc_with_additional_section($year, $add_section, $department)
 function create_excel_report()
 {
     require_once '/sites/all/libraries/Classes/PHPExcel.php';
+    require_once('/sites/all/libraries/Classes/PHPExcel/Writer/Excel5.php');
     $PHPExcel = new PHPExcel();
     $PHPExcel->setActiveSheetIndex(0);
     $sheet = $PHPExcel->getActiveSheet();
     $sheet->setTitle('Дополнительные разделы');
 
     $years = get_years();
-    $departments = get_all_departments_archive();
-    $sections = get_all_additional_sections_archive();
+    $sections = get_all_additional_sections_sorted_archive();
 
     $i = 2;
     foreach ($years as $year) {
-        $sheet->setCellValueByColumnAndRow($i, 0, $year->year);
+        $sheet->setCellValueByColumnAndRow($i, 1, $year->year);
         $i++;
     }
 
+    $j = 1;
+    $department = "";
+    $section_old = "";
+    foreach ($sections as $section) {
+        if ($section_old != $section->name_section) {
+            $j++;
+            $section_old = $section->name_section;
+            $sheet->setCellValueByColumnAndRow(1, $j, $section_old);
+        }
+        if ($section->name_department != $department) {
+            $department = $section->name_department;
+            $sheet->setCellValueByColumnAndRow(0, $j, $department);
+        }
+        $year_cell = 2;
+        foreach ($years as $year) {
+            $students = get_students_by_additional_section($year->year, $section->name_section, $section->name_department);
+            $sheet->setCellValueByColumnAndRow($year_cell, $j, count((array)$students));
+            $year_cell++;
+        }
+    }
 
 //// Выравнивание текста
 //    $sheet->getStyle('A1')->getAlignment()->setHorizontal(
 //        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 
 
-    $objWriter = new PHPExcel_Writer_Excel2007($PHPExcel);
-    $file = 'archive/additional_sections.xlsx';
+//    $objWriter->save($file);
+//    header("Cache-Control: public");
+//    header("Content-Description: File Transfer");
+//    header("Content-Disposition: attachment; filename=additional_sections.xls");
+//    header("Content-Type: application/vnd.ms-excel; charset=UTF-8");
+//    header("Content-Transfer-Encoding: binary");
+//    readfile($file);
+
+    // Выводим HTTP-заголовки
+    header("Cache-Control: no-cache, must-revalidate");
+    header("Pragma: no-cache");
+    header("Content-type: application/vnd.ms-excel; charset=utf-8");
+    header("Content-Disposition: attachment; filename=additional_sections.xls");
+
+    $objWriter = new PHPExcel_Writer_Excel5($PHPExcel);
+    $file = 'archive/additional_sections.xls';
     $objWriter->save($file);
-    header("Cache-Control: public");
-    header("Content-Description: File Transfer");
-    header("Content-Disposition: attachment; filename=additional_sections.xlsx");
-    header("Content-Type: application/vnd.ms-excel; charset=UTF-8");
-    header("Content-Transfer-Encoding: binary");
-    readfile($file);
+
+
 }

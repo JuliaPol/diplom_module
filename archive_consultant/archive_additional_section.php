@@ -1,6 +1,5 @@
 <?php
 
-//include 'archive_all_students.php';
 
 function archive_additional_sections()
 {

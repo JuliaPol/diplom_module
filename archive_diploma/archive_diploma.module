@@ -1,0 +1,76 @@
+<?php
+
+/**
+ * Модуль для работы с архивом
+ */
+function archive_diploma_menu()
+{
+    $items = array();
+
+    $items['archive/student/all'] = array(
+        'title' => 'Студенты',
+        'description' => 'Список студентов',
+        'page callback' => 'archive_all_students',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
+    $items['archive/student'] = array(
+        'title' => 'Студент',
+        'description' => 'Студент',
+        'page callback' => 'archive_student',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
+    $items['archive/teacher'] = array(
+        'title' => 'Преподаватель',
+        'description' => 'Преподаватель',
+        'page callback' => 'archive_teacher',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
+    $items['archive/diplomas'] = array(
+        'title' => 'Темы ВКР',
+        'description' => 'Темы ВКР',
+        'page callback' => 'archive_all_diplomas',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
+
+    $items ['archive/download/themes'] = array (
+        'title' => 'Скачать список тем ВКР',
+        'description' => 'Скачать список тем ВКР',
+        'page callback'=>'archive_download_themes_doc',
+        'access arguments' => array ('administer archive module' ),
+        'type' => MENU_CALLBACK );
+    return $items;
+}
+
+function archive_diploma_theme() {
+    return array(
+        'simple' => array(
+            'render element' => 'form',
+            'file' => 'archive_diploma.theme.inc',
+        ),
+        'diploma' => array(
+            'render element' => 'form',
+            'file' => 'archive_diploma.theme.inc',
+        ),
+    );
+}
+
+function archive_diploma_permission()
+{
+    return array(
+        'administer archive module' => array(
+            'title' => t('Administer archive module'),
+            'description' => t('Deny access to certain users.'),
+        ),
+    );
+}
+
+include 'archive_all_students.php';
+include 'archive_student.php';
+include 'archive_teacher.php';
+include 'archive_diploma.theme.inc';
+include 'archive_diploma.php';
+include 'archive_direction.php';

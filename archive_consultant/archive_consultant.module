@@ -1,40 +1,8 @@
 <?php
 
-
-/**
- * Модуль для работы с архивом
- */
-function archive_menu()
+function archive_consultant_menu()
 {
     $items = array();
-    $items['archive/import'] = array(
-        'title' => 'Создание архива',
-        'description' => 'Создание архива',
-        'page callback' => 'archive_create',
-        'access arguments' => array('administer archive module' ),
-        'type' => MENU_CALLBACK,
-    );
-    $items['archive/student/all'] = array(
-        'title' => 'Студенты',
-        'description' => 'Список студентов',
-        'page callback' => 'archive_all_students',
-        'access arguments' => array('administer archive module' ),
-        'type' => MENU_CALLBACK,
-    );
-    $items['archive/student'] = array(
-        'title' => 'Студент',
-        'description' => 'Студент',
-        'page callback' => 'archive_student',
-        'access arguments' => array('administer archive module' ),
-        'type' => MENU_CALLBACK,
-    );
-    $items['archive/teacher'] = array(
-        'title' => 'Преподаватель',
-        'description' => 'Преподаватель',
-        'page callback' => 'archive_teacher',
-        'access arguments' => array('administer archive module' ),
-        'type' => MENU_CALLBACK,
-    );
     $items['archive/reviewer'] = array(
         'title' => 'Рецензент',
         'description' => 'Рецензент',
@@ -46,13 +14,6 @@ function archive_menu()
         'title' => 'Список рецензентов',
         'description' => 'Список рецензентов',
         'page callback' => 'archive_all_reviewers',
-        'access arguments' => array('administer archive module' ),
-        'type' => MENU_CALLBACK,
-    );
-    $items['archive/diplomas'] = array(
-        'title' => 'Темы ВКР',
-        'description' => 'Темы ВКР',
-        'page callback' => 'archive_all_diplomas',
         'access arguments' => array('administer archive module' ),
         'type' => MENU_CALLBACK,
     );
@@ -70,12 +31,6 @@ function archive_menu()
         'access arguments' => array('administer archive module' ),
         'type' => MENU_CALLBACK,
     );
-    $items ['archive/download/themes'] = array (
-        'title' => 'Скачать список тем ВКР',
-        'description' => 'Скачать список тем ВКР',
-        'page callback'=>'archive_download_themes_doc',
-        'access arguments' => array ('administer archive module' ),
-        'type' => MENU_CALLBACK );
     $items ['archive/download/department/additional_sections'] = array (
         'title' => 'Скачать список студентов с доп разделом на кафедре',
         'description' => 'Скачать список студентов с доп разделом на кафедре',
@@ -115,36 +70,28 @@ function archive_menu()
     return $items;
 }
 
-function archive_theme() {
+function archive_consultant_theme() {
     return array(
-        'simple' => array(
-            'render element' => 'form',
-            'file' => 'archive.theme.inc',
-        ),
-        'diploma' => array(
-            'render element' => 'form',
-            'file' => 'archive.theme.inc',
-        ),
         'reviewers' => array(
             'render element' => 'form',
-            'file' => 'archive.theme.inc',
+            'file' => 'archive_consultant.theme.inc',
         ),
         'section' => array(
             'render element' => 'form',
-            'file' => 'archive.theme.inc',
+            'file' => 'archive_consultant.theme.inc',
         ),
         'consultants' => array(
             'render element' => 'form',
-            'file' => 'archive.theme.inc',
+            'file' => 'archive_consultant.theme.inc',
         ),
         'students_by_consultant' => array(
             'render element' => 'form',
-            'file' => 'archive.theme.inc',
+            'file' => 'archive_consultant.theme.inc',
         ),
     );
 }
 
-function archive_permission()
+function archive_consultant_permission()
 {
     return array(
         'administer archive module' => array(
@@ -154,12 +101,9 @@ function archive_permission()
     );
 }
 
-include 'archive_import.php';
-include 'archive_all_students.php';
-include 'archive_student.php';
-include 'archive_teacher.php';
-include 'archive.theme.inc';
-include 'archive_diploma.php';
+drupal_get_path('module', 'archive_diploma');
+
+include 'archive_consultant.theme.inc';
 include 'archive_member_sec.php';
 include 'archive_reviewer.php';
 include 'archive_additional_section.php';

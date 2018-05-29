@@ -1,7 +1,5 @@
 <?php
 
-include 'archive_direction.php';
-
 //global $year_changed;
 //global $dir_changed;
 //global $eval_changed;

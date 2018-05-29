@@ -1,0 +1,30 @@
+<?php
+
+
+/**
+ * Модуль для работы с архивом
+ */
+function archive_import_menu()
+{
+    $items = array();
+    $items['archive/import'] = array(
+        'title' => 'Создание архива',
+        'description' => 'Создание архива',
+        'page callback' => 'archive_create',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
+    return $items;
+}
+
+function archive_import_permission()
+{
+    return array(
+        'administer archive module' => array(
+            'title' => t('Administer archive module'),
+            'description' => t('Deny access to certain users.'),
+        ),
+    );
+}
+
+include 'archive_import.php';

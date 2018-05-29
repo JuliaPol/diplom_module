@@ -270,9 +270,9 @@ CREATE TABLE IF NOT EXISTS `consultant_as` (
 
 CREATE TABLE IF NOT EXISTS `annotation_diplom` (
   `id_annotation` int(11) NOT NULL,
-  `id_diplom` int(11) NOT NULL REFERENCES `teacher_student_diplom`(`id_teacher_student_diplom`),
+  `id_diplom` int(11) NOT NULL REFERENCES `diplom`(`id_diplom`),
   `ref_annotation` VARCHAR(100) DEFAULT NULL,
-     `year` smallint(4) NOT NULL,
+  `year` smallint(4) NOT NULL,
   PRIMARY KEY (`id_annotation`, `year`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

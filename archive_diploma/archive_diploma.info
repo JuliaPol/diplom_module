@@ -1,0 +1,4 @@
+name = "Archive diploma"
+description = "Displays archive diploma"
+version = 7.x-1.x-dev
+core = 7.x

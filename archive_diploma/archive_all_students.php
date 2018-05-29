@@ -15,11 +15,13 @@ function archive_all_students_page($form, &$form_state)
     $directions = get_all_directions_archive();
     $array = array();
     $array_dir = array();
-    $i = 0;
+    $i = 1;
+    $array[0] = 'Все';
     foreach ($years as $value) {
         $array[$i++] = $value->year;
     }
-    $i = 0;
+    $i = 1;
+    $array_dir[0] = 'Все';
     foreach ($directions as $value) {
         $array_dir[$i++] = $value->direction_code . ' - ' . $value->direction_name;
     }
@@ -64,7 +66,7 @@ function archive_all_students_page($form, &$form_state)
     $form['selects']['eval'] = array(
         '#type' => 'select',
         '#title' => t('Итоговая оценка'),
-        '#options' => array('0', '1', '2', '3', '4', '5'),
+        '#options' => array('Все', '0', '1', '2', '3', '4', '5'),
         '#default_value' => 0,
         '#prefix' => '<div style="padding: 10px; margin-right: 5px;">',
         '#suffix' => '</div>',
@@ -122,8 +124,17 @@ function archive_all_students_page($form, &$form_state)
 function archive_all_students_dropdown_callback($form, $form_state)
 {
     $year = $form_state['complete form']['selects']['year']['#options'][$_POST['year']];
+    if ($year == 'Все') {
+        $year = 99;
+    }
     $direction = $form_state['complete form']['selects']['direction']['#options'][$_POST['direction']];
+    if ($direction == 'Все') {
+        $direction = 99;
+    }
     $eval = $form_state['complete form']['selects']['eval']['#options'][$_POST['eval']];
+    if ($eval == 'Все') {
+        $eval = 99;
+    }
 //    global $year_changed, $dir_changed, $eval_changed;
 //    $GLOBALS['year_changed'] = $year;
     $nodes = get_students_archive($form['simple_table']['#header'], $year, $direction, $eval);
@@ -200,7 +211,7 @@ function get_students_archive($header, $year, $dir_code, $evaluation)
     if ($evaluation != 99) {
         $query1->condition('dip.final_evaluation', $evaluation);
     }
-    if ($year != 0 && $dir_code != 99) {
+    if ($year != 0 && $year!= 99) {
         $query1->condition('s.`year`', $year);
     }
     $query1->limit(10)

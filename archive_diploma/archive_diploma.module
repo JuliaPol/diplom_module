@@ -28,6 +28,13 @@ function archive_diploma_menu()
         'access arguments' => array('administer archive module' ),
         'type' => MENU_CALLBACK,
     );
+    $items['archive/teacher/all'] = array(
+        'title' => 'Список преподавателей',
+        'description' => 'Список преподавателей',
+        'page callback' => 'archive_all_teachers',
+        'access arguments' => array('administer archive module' ),
+        'type' => MENU_CALLBACK,
+    );
     $items['archive/diplomas'] = array(
         'title' => 'Темы ВКР',
         'description' => 'Темы ВКР',
@@ -52,6 +59,10 @@ function archive_diploma_theme() {
             'file' => 'archive_diploma.theme.inc',
         ),
         'diploma' => array(
+            'render element' => 'form',
+            'file' => 'archive_diploma.theme.inc',
+        ),
+        'teachers' => array(
             'render element' => 'form',
             'file' => 'archive_diploma.theme.inc',
         ),

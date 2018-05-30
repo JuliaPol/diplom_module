@@ -337,6 +337,7 @@ function archive_import_form_submit($form, &$form_state)
                 ->fields(array(
                     'id_diplom' => $value->diplom_id,
                     'diplom_name' => $value->diplom_theme,
+                    'id_teacher' => $value->id_teacher,
                     'year' => $year,
                 ))
                 ->execute();

@@ -283,6 +283,7 @@ CREATE TABLE IF NOT EXISTS `annotation_diplom` (
 CREATE TABLE IF NOT EXISTS `diplom` (
   `id_diplom` int(11) NOT NULL,
   `diplom_name` varchar(256) NOT NULL,
+  `id_teacher` int(11) NOT NULL REFERENCES `teacher`(`id_teacher`),
   `year` smallint(4) NOT NULL,
   PRIMARY KEY (`id_diplom`, `year`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;

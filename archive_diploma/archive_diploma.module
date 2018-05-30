@@ -80,6 +80,7 @@ function archive_diploma_permission()
 }
 
 include 'archive_all_students.php';
+include 'archive_all_teachers.php';
 include 'archive_student.php';
 include 'archive_teacher.php';
 include 'archive_diploma.theme.inc';

@@ -222,14 +222,12 @@ function get_students_archive($header, $year, $dir_code, $evaluation)
     return $students;
 }
 
-function get_students_by_teacher($header, $year, $teacher_id)
+function get_students_by_teacher($year, $teacher_id)
 {
     db_set_active('archive_db');
-    $query1 = db_select('student', 's')
-        ->extend('PagerDefault')
-        ->extend('TableSort');
-    $query1->innerJoin('teacher_student_diplom', 'dip', 's.id_student = dip.id_student AND s.`year` =dip.`year`');
-    $query1->leftJoin('teacher', 't', 't.id_teacher = dip.id_teacher AND t.`year` =dip.`year`');
+    $query1 = db_select('student', 's');
+    $query1->innerJoin('teacher_student_diplom', 'dip', 's.id_student = dip.id_student AND s.`year` = dip.`year`');
+    $query1->leftJoin('teacher', 't', 't.id_teacher = dip.id_teacher AND t.`year` = dip.`year`');
     $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
     $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
     $query1->fields('s')
@@ -237,9 +235,7 @@ function get_students_by_teacher($header, $year, $teacher_id)
         ->fields('d', array('direction_code', 'direction_name'))
         ->fields('dip')
         ->condition('t.id_teacher', $teacher_id)
-        ->condition('s.`year`', $year)
-        ->limit(10)
-        ->orderByHeader($header);
+        ->condition('s.`year`', $year);
     $students = $query1->execute()
         ->fetchAll();
     db_set_active();

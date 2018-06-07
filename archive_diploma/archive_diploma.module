@@ -44,9 +44,16 @@ function archive_diploma_menu()
     );
 
     $items ['archive/download/themes'] = array (
-        'title' => 'Скачать список тем ВКР',
-        'description' => 'Скачать список тем ВКР',
-        'page callback'=>'archive_download_themes_doc',
+    'title' => 'Скачать список тем ВКР',
+    'description' => 'Скачать список тем ВКР',
+    'page callback'=>'archive_download_themes_doc',
+    'access arguments' => array ('administer archive module' ),
+    'type' => MENU_CALLBACK );
+
+    $items ['archive/direction/all'] = array (
+        'title' => 'Список направлений',
+        'description' => 'Список направлений',
+        'page callback'=>'archive_all_directions',
         'access arguments' => array ('administer archive module' ),
         'type' => MENU_CALLBACK );
     return $items;
@@ -63,6 +70,10 @@ function archive_diploma_theme() {
             'file' => 'archive_diploma.theme.inc',
         ),
         'teachers' => array(
+            'render element' => 'form',
+            'file' => 'archive_diploma.theme.inc',
+        ),
+        'directions' => array(
             'render element' => 'form',
             'file' => 'archive_diploma.theme.inc',
         ),

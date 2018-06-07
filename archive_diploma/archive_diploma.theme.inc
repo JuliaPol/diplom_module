@@ -84,3 +84,32 @@ function theme_teachers($vars) {
     $output .= drupal_render_children($form);
     return $output;
 }
+
+
+function theme_directions($vars) {
+    $form = $vars['form'];
+    $rows = array();
+    foreach (element_children($form) as $id) {
+        if (isset($form[$id])) {
+            $rows[] = array(
+                'data' => array(
+                    drupal_render($form[$id]['year']),
+                    drupal_render($form[$id]['dir_code']),
+                    drupal_render($form[$id]['dir_name']),
+                    drupal_render($form[$id]['count_groups']),
+                    drupal_render($form[$id]['count_studs']),
+                ),
+                'class' => array(),
+            );
+        }
+    }
+
+    $output = theme('table', array(
+        'header' => $form['#header'],
+        'rows'  => $rows,
+        'empty' => t('Table is empty', array()),
+    ));
+
+    $output .= drupal_render_children($form);
+    return $output;
+}

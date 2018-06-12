@@ -11,55 +11,63 @@ function archive_diploma_menu()
         'title' => 'Студенты',
         'description' => 'Список студентов',
         'page callback' => 'archive_all_students',
-        'access arguments' => array('administer archive module' ),
+        'access arguments' => array('administer archive module'),
         'type' => MENU_CALLBACK,
     );
     $items['archive/student'] = array(
         'title' => 'Студент',
         'description' => 'Студент',
         'page callback' => 'archive_student',
-        'access arguments' => array('administer archive module' ),
+        'access arguments' => array('administer archive module'),
         'type' => MENU_CALLBACK,
     );
     $items['archive/teacher'] = array(
         'title' => 'Преподаватель',
         'description' => 'Преподаватель',
         'page callback' => 'archive_teacher',
-        'access arguments' => array('administer archive module' ),
+        'access arguments' => array('administer archive module'),
         'type' => MENU_CALLBACK,
     );
     $items['archive/teacher/all'] = array(
         'title' => 'Список преподавателей',
         'description' => 'Список преподавателей',
         'page callback' => 'archive_all_teachers',
-        'access arguments' => array('administer archive module' ),
+        'access arguments' => array('administer archive module'),
         'type' => MENU_CALLBACK,
     );
     $items['archive/diplomas'] = array(
         'title' => 'Темы ВКР',
         'description' => 'Темы ВКР',
         'page callback' => 'archive_all_diplomas',
-        'access arguments' => array('administer archive module' ),
+        'access arguments' => array('administer archive module'),
         'type' => MENU_CALLBACK,
     );
 
-    $items ['archive/download/themes'] = array (
-    'title' => 'Скачать список тем ВКР',
-    'description' => 'Скачать список тем ВКР',
-    'page callback'=>'archive_download_themes_doc',
-    'access arguments' => array ('administer archive module' ),
-    'type' => MENU_CALLBACK );
+    $items ['archive/download/themes'] = array(
+        'title' => 'Скачать список тем ВКР',
+        'description' => 'Скачать список тем ВКР',
+        'page callback' => 'archive_download_themes_doc',
+        'access arguments' => array('administer archive module'),
+        'type' => MENU_CALLBACK);
 
-    $items ['archive/direction/all'] = array (
+    $items ['archive/direction/all'] = array(
         'title' => 'Список направлений',
         'description' => 'Список направлений',
-        'page callback'=>'archive_all_directions',
-        'access arguments' => array ('administer archive module' ),
-        'type' => MENU_CALLBACK );
+        'page callback' => 'archive_all_directions',
+        'access arguments' => array('administer archive module'),
+        'type' => MENU_CALLBACK);
+
+    $items ['archive/download/statistics/directions'] = array(
+        'title' => 'Скачать статистику по направлениям',
+        'description' => 'Скачать статистику по направлениям',
+        'page callback' => 'create_excel_report_for_directions',
+        'access arguments' => array('administer archive module'),
+        'type' => MENU_CALLBACK);
     return $items;
 }
 
-function archive_diploma_theme() {
+function archive_diploma_theme()
+{
     return array(
         'simple' => array(
             'render element' => 'form',

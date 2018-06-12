@@ -56,6 +56,52 @@ function get_count_students_archive_by_dir($dir, $year)
     return $directions;
 }
 
+function get_count_students_with_theme_archive_by_dir($dir, $year)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('student', 's');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND s.`year` = g.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND g.`year` = d.`year`');
+    $query1->innerJoin('teacher_student_diplom', 'dip', 'dip.id_student = s.id_student AND s.`year` = dip.`year`');
+    $query1->fields('d')
+        ->condition('d.direction_code', $dir)
+        ->condition('d.`year`', $year);
+    $directions = $query1->execute()->rowCount();
+    db_set_active();
+    return $directions;
+}
+
+function get_count_defended_students_archive_by_dir($dir, $year)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('student', 's');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND s.`year` = g.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND g.`year` = d.`year`');
+    $query1->innerJoin('teacher_student_diplom', 'dip', 'dip.id_student = s.id_student AND s.`year` = dip.`year`');
+    $query1->fields('d')
+        ->condition('d.direction_code', $dir)
+        ->condition('dip.final_evaluation', 0, '>')
+        ->condition('d.`year`', $year);
+    $directions = $query1->execute()->rowCount();
+    db_set_active();
+    return $directions;
+}
+
+function get_count_students_archive_by_dir_and_eval($dir, $year, $evaluation)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('student', 's');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND s.`year` = g.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND g.`year` = d.`year`');
+    $query1->innerJoin('teacher_student_diplom', 'dip', 'dip.id_student = s.id_student AND s.`year` = dip.`year`');
+    $query1->fields('d')
+        ->condition('d.direction_code', $dir)
+        ->condition('dip.final_evaluation', $evaluation)
+        ->condition('d.`year`', $year);
+    $directions = $query1->execute()->rowCount();
+    db_set_active();
+    return $directions;
+}
 
 function archive_all_directions()
 {
@@ -109,6 +155,10 @@ function archive_all_directions_page($form, &$form_state)
     $form['directions_table'] = fill_direction_table($form, $header, $directions);
     // Подключаем отображение пейджинатора.
     $form['pager']['#markup'] = theme('pager');
+    $link = l(t("Скачать статистику за все года"), 'archive/download/statistics/directions');
+    $form['download'] = array(
+        '#markup' => $link,
+    );
     return $form;
 }
 
@@ -144,22 +194,107 @@ function fill_direction_table($form, $header, $directions)
             $link = l(t($node->direction_code), 'archive/direction', array('query' =>
                 array('dir_code' => $node->direction_code, 'year' => $node->year)));
 
-            $form['directions_table'][$node->year.'-'.$nid]['year'] = array(
+            $form['directions_table'][$node->year . '-' . $nid]['year'] = array(
                 '#markup' => $node->year,
             );
-            $form['directions_table'][$node->year.'-'.$nid]['dir_code'] = array(
+            $form['directions_table'][$node->year . '-' . $nid]['dir_code'] = array(
                 '#markup' => $link,
             );
-            $form['directions_table'][$node->year.'-'.$nid]['dir_name'] = array(
+            $form['directions_table'][$node->year . '-' . $nid]['dir_name'] = array(
                 '#markup' => $node->direction_name,
             );
-            $form['directions_table'][$node->year.'-'.$nid]['count_groups'] = array(
+            $form['directions_table'][$node->year . '-' . $nid]['count_groups'] = array(
                 '#markup' => $node->count_groups,
             );
-            $form['directions_table'][$node->year.'-'.$nid]['count_studs'] = array(
+            $form['directions_table'][$node->year . '-' . $nid]['count_studs'] = array(
                 '#markup' => $node->count_studs,
             );
         }
     }
     return $form['directions_table'];
+}
+
+function create_excel_report_for_directions()
+{
+    require_once '/sites/all/libraries/Classes/PHPExcel.php';
+    require_once('/sites/all/libraries/Classes/PHPExcel/Writer/Excel5.php');
+    $PHPExcel = new PHPExcel();
+    $PHPExcel->setActiveSheetIndex(0);
+    $sheet = $PHPExcel->getActiveSheet();
+    $sheet->setTitle('Направления');
+
+    $years = get_years();
+    $directions = get_all_directions_archive();
+
+    $count_year = count((array)$years);
+    $sheet->setCellValueByColumnAndRow(1, 1, 'Количество студентов');
+    $sheet->mergeCellsByColumnAndRow(1, 1, $count_year, 1);
+    $sheet->getStyleByColumnAndRow(1, 1)->getAlignment()->setHorizontal(
+        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValueByColumnAndRow($count_year + 1, 1, 'Количество студентов с темой ВКР');
+    $sheet->mergeCellsByColumnAndRow($count_year + 1, 1, 2 * $count_year, 1);
+    $sheet->getStyleByColumnAndRow($count_year + 1, 1)->getAlignment()->setHorizontal(
+        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValueByColumnAndRow(2 * $count_year + 1, 1, 'Количество защитившихся студентов');
+    $sheet->mergeCellsByColumnAndRow(2 * $count_year + 1, 1, 3 * $count_year, 1);
+    $sheet->getStyleByColumnAndRow(2 * $count_year + 1, 1)->getAlignment()->setHorizontal(
+        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValueByColumnAndRow(3 * $count_year + 1, 1, 'Количество студентов с оценкой 3');
+    $sheet->mergeCellsByColumnAndRow(3 * $count_year + 1, 1, 4 * $count_year, 1);
+    $sheet->getStyleByColumnAndRow(3 * $count_year + 1, 1)->getAlignment()->setHorizontal(
+        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValueByColumnAndRow(4 * $count_year + 1, 1, 'Количество студентов с оценкой 4');
+    $sheet->mergeCellsByColumnAndRow(4 * $count_year + 1, 1, 5 * $count_year, 1);
+    $sheet->getStyleByColumnAndRow(4 * $count_year + 1, 1)->getAlignment()->setHorizontal(
+        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValueByColumnAndRow(5 * $count_year + 1, 1, 'Количество студентов с оценкой 5');
+    $sheet->mergeCellsByColumnAndRow(5 * $count_year + 1, 1, 6 * $count_year, 1);
+    $sheet->getStyleByColumnAndRow(5 * $count_year + 1, 1)->getAlignment()->setHorizontal(
+        PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+
+    $sheet->getColumnDimension('A')->setAutoSize(true);
+    for ($i = 0; $i <= 6 * $count_year; $i++) {
+        $sheet->getColumnDimensionByColumn($i)->setWidth(20);
+    }
+
+    $i = 1;
+    for ($x = 0; $x < 6; $x++) {
+        foreach ($years as $year) {
+            $sheet->setCellValueByColumnAndRow($i, 2, $year->year);
+            $i++;
+        }
+    }
+    $i = 3;
+    foreach ($directions as $direction) {
+        $sheet->setCellValueByColumnAndRow(0, $i, $direction->direction_code . ' - ' . $direction->direction_name);
+        $j = 1;
+        foreach ($years as $year) {
+            $count_studs = get_count_students_archive_by_dir($direction->direction_code, $year->year);
+            $sheet->setCellValueByColumnAndRow($j, $i, $count_studs);
+            $count_with_theme = get_count_students_with_theme_archive_by_dir($direction->direction_code, $year->year);
+            $sheet->setCellValueByColumnAndRow($j + $count_year, $i, $count_with_theme);
+            $count_defended = get_count_defended_students_archive_by_dir($direction->direction_code, $year->year);
+            $sheet->setCellValueByColumnAndRow($j + 2 * $count_year, $i, $count_defended);
+            $count_3 = get_count_students_archive_by_dir_and_eval($direction->direction_code, $year->year, 3);
+            $sheet->setCellValueByColumnAndRow($j + 3 * $count_year, $i, $count_3);
+            $count_4 = get_count_students_archive_by_dir_and_eval($direction->direction_code, $year->year, 4);
+            $sheet->setCellValueByColumnAndRow($j + 4 * $count_year, $i, $count_4);
+            $count_5 = get_count_students_archive_by_dir_and_eval($direction->direction_code, $year->year, 5);
+            $sheet->setCellValueByColumnAndRow($j + 5 * $count_year, $i, $count_5);
+            $j++;
+        }
+        $i++;
+    }
+
+    // Выводим HTTP-заголовки
+    header("Cache-Control: no-cache, must-revalidate");
+    header("Pragma: no-cache");
+    header("Content-type: application/vnd.ms-excel; charset=utf-8");
+    header("Content-Disposition: attachment; filename=directions.xls");
+
+    $objWriter = new PHPExcel_Writer_Excel5($PHPExcel);
+    $file = 'archive/directions.xls';
+    $objWriter->save($file);
+
+
 }

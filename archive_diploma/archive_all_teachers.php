@@ -191,7 +191,7 @@ function get_teachers_archive($header, $year, $teacher_activity)
     foreach ($teachers as $nid => $value) {
         $teachers[$nid]->activity = get_all_activities_by_teacher($value->id_teacher, $value->year);
         $teachers[$nid]->count_themes = count((array)get_themes_by_id_teacher($value->id_teacher, $value->year, false));
-        $teachers[$nid]->count_stud = count((array)get_students_by_teacher($header, $value->year, $value->id_teacher));
+        $teachers[$nid]->count_stud = count((array)get_students_by_teacher($value->year, $value->id_teacher));
     }
     db_set_active();
     return $teachers;

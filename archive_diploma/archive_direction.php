@@ -12,6 +12,32 @@ function get_all_directions_archive()
     return $directions;
 }
 
+function get_direction_archive_by_group($group_number, $year) {
+    db_set_active('archive_db');
+    $query1 = db_select('stud_group', 'g');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND g.`year` = d.`year`');
+    $query1->fields('d')
+        ->condition('g.group_number', $group_number)
+        ->condition('d.year', $year);
+    $directions = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $directions;
+}
+
+function get_direction_archive_by_id($dir_code, $year)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('direction', 'd');
+    $query1->fields('d')
+        ->condition('d.direction_code', $dir_code)
+        ->condition('d.year', $year);
+    $directions = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $directions;
+}
+
 function get_all_directions_archive_by_year($year)
 {
     db_set_active('archive_db');
@@ -54,6 +80,19 @@ function get_count_students_archive_by_dir($dir, $year)
     $directions = $query1->execute()->rowCount();
     db_set_active();
     return $directions;
+}
+
+function get_count_students_archive_by_group($group, $year)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('student', 's');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND s.`year` = g.`year`');
+    $query1->fields('g')
+        ->condition('g.group_number', $group)
+        ->condition('g.`year`', $year);
+    $groups = $query1->execute()->rowCount();
+    db_set_active();
+    return $groups;
 }
 
 function get_count_students_with_theme_archive_by_dir($dir, $year)
@@ -103,9 +142,146 @@ function get_count_students_archive_by_dir_and_eval($dir, $year, $evaluation)
     return $directions;
 }
 
+function get_groups_by_dir_archive($dir_code, $year)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('stud_group', 'g');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
+    $query1->fields('g')
+        ->condition('d.direction_code', $dir_code)
+        ->condition('g.`year`', $year);
+    $groups = $query1->execute()->fetchAll();
+    foreach ($groups as $nid => $group) {
+        $groups[$nid]->stud_count = get_count_students_archive_by_group($group->group_number, $group->year);
+    }
+    db_set_active();
+    return $groups;
+}
+
+function get_best_diplomas($dir_code, $year)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('diplom', 'th');
+    $query1->innerJoin('teacher_student_diplom', 'dip', 'dip.id_theme = th.id_diplom AND th.`year` = dip.`year`');
+    $query1->leftJoin('student', 's', 'dip.id_student = s.id_student AND s.`year` = dip.`year`');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
+    $query1->innerJoin('annotation_diplom', 'a', 'a.id_diplom = th.id_diplom AND a.`year` = th.`year`');
+    $query1->fields('th')
+        ->fields('dip')
+        ->fields('a')
+        ->condition('th.`year`', $year)
+        ->condition('d.direction_code', $dir_code);
+    $themes = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $themes;
+}
+
 function archive_all_directions()
 {
     return drupal_get_form('archive_all_directions_page');
+}
+
+function archive_direction()
+{
+    return drupal_get_form('archive_direction_page');
+}
+
+function archive_direction_page($form, &$form_state)
+{
+    if (empty($_GET['year']))
+        $_GET['year'] = date('Y');
+    if (empty($_GET['dir_code']))
+        $_GET['dir_code'] = 1;
+
+    $direction = get_direction_archive_by_id($_GET['dir_code'], $_GET['year']);
+    $form['direction'] = array(
+        '#markup' => '<h3>' . $direction[0]->direction_code . ' - ' . $direction[0]->direction_name . '</h3>',
+    );
+
+    $form['year'] = array(
+        '#markup' => '<h3>' . 'Год: ' . $_GET['year'] . '</h3>',
+    );
+
+    $link_stat = l(t('Загрузить статистику'), 'archive/download/statistics/direction', array('query' =>
+        array('group' => $direction[0]->direction_code, 'year' => $direction[0]->year)));
+
+    $link_report = l(t('Загрузить отчет председателя ГЭК'), $direction[0]->ref_report_head);
+
+    $link_best_stud = l(t('Загрузить список лучших ВКР'), $direction[0]->ref_the_best_students);
+
+    $form['statistic'] = array(
+        '#markup' => $link_stat,
+    );
+
+    $form['report'] = array(
+        '#markup' => '<p></p>' . $link_report,
+    );
+
+    $header = array(
+        array('data' => t('Группа'), 'field' => 'group_number'),
+        array('data' => t('Количество студентов'), 'field' => 'count_stud'),
+        array('data' => t('Год создания'), 'field' => 'creation_year'),
+        array('data' => t('Email'), 'field' => 'email'),
+        array('data' => t('Список студентов'), 'field' => 'stud_list'),
+        array('data' => t('Проверка на самостоятельность выполнения'), 'field' => 'originality'),
+    );
+
+    $form['group_table'] = array(
+        '#type' => 'container',
+        '#theme' => 'group',
+        '#header' => $header
+    );
+
+    $groups = get_groups_by_dir_archive($direction[0]->direction_code, $_GET['year']);
+
+    foreach ($groups as $nid => $group) {
+        $link = l(t('Загрузить'), 'archive/download/group/stud_list', array('query' =>
+            array('group' => $group->group_number, 'year' => $group->year)));
+        $link_originality = l(t('Загрузить'), 'archive/download/originality', array('query' =>
+            array('group' => $group->group_number, 'year' => $group->year)));
+        $form['group_table'][$nid]['group_number'] = array(
+            '#markup' => $group->group_number
+        );
+        $form['group_table'][$nid]['count_stud'] = array(
+            '#markup' => $group->stud_count
+        );
+        $form['group_table'][$nid]['creation_year'] = array(
+            '#markup' => $group->creation_year
+        );
+        $form['group_table'][$nid]['email'] = array(
+            '#markup' => $group->email
+        );
+        $form['group_table'][$nid]['stud_list'] = array(
+            '#markup' => $link
+        );
+        $form['group_table'][$nid]['originality'] = array(
+            '#markup' => $link_originality
+        );
+    }
+
+    $form['students'] = array(
+        '#markup' => $link_best_stud,
+    );
+
+    $form['best_diplomas'] = array(
+        '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+        '#title' => 'Лучшие работы',
+    );
+
+    $best_diplomas = get_best_diplomas($direction[0]->direction_code, $_GET['year']);
+
+    foreach ($best_diplomas as $nid => $best_diploma) {
+        $link_annotation = l(t($best_diploma->diplom_name), $best_diploma->ref_annotation);
+        $form['best_diplomas'][$nid] = array(
+            '#markup' => $link_annotation,
+        );
+    }
+
+    return $form;
 }
 
 function archive_all_directions_page($form, &$form_state)
@@ -296,5 +472,67 @@ function create_excel_report_for_directions()
     $file = 'archive/directions.xls';
     $objWriter->save($file);
 
+}
 
+function download_archive_stud_list_by_group()
+{
+    require_once '/sites/all/libraries/Classes/PHPWord.php';
+    $PHPWord = new PHPWord();
+    $PHPWord->setDefaultFontName('Times New Roman');
+    $section = $PHPWord->createSection();
+
+    if (empty($_GET['year']))
+        $_GET['year'] = date('Y');
+    if (empty($_GET['group']))
+        $_GET['group'] = 1;
+    $direction = get_direction_archive_by_group($_GET['group'], $_GET['year']);
+
+    $PHPWord->addFontStyle('TitleStyle', array('bold' => true, 'align' => 'center', 'size' => 14));
+
+    $section->addText('Темы ВКР и научные руководители, ' . ($_GET['year'] - 1) . ' - ' . $_GET['year']
+        . ' уч. год ' . $direction[0]->direction_code . ' - ' . $direction[0]->direction_name . ', гр '.$_GET['group'], 'TitleStyle');
+
+
+    $styleTable = array('borderSize' => 6, 'borderColor' => '000', 'cellMargin' => 80);
+    $fontStyle = array('bold' => true, 'align' => 'center');
+    $PHPWord->addTableStyle('myOwnTableStyle', $styleTable);
+    $table = $section->addTable('myOwnTableStyle');
+
+    $table->addRow(900);
+
+    $table->addCell(500, $styleCell)->addText('№', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('Фамилия, имя, отчество', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('Тема ВКР', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('Руководитель', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('Консультант', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('Доп. раздел', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('Дата защиты', $fontStyle);
+
+    $group = get_themes_by_year_and_group($_GET['year'], $_GET['group']);
+
+    $i = 1;
+    foreach ($group as $node) {
+        $table->addRow(900);
+        $table->addCell(1000, $styleCell)->addText($i, $fontStyle);
+        $table->addCell(1000, $styleCell)->addText($node->student[0]->last_name . ' '
+            . $node->student[0]->first_name . ' ' . $node->student[0]->patronymic, $fontStyle);
+        $table->addCell(1000, $styleCell)->addText($node->diplom_name, $fontStyle);
+        $table->addCell(1000, $styleCell)->addText($node->teacher[0]->last_name
+            . ' ' . $node->teacher[0]->first_name . ' ' . $node->teacher[0]->patronymic, $fontStyle);
+        $table->addCell(1000, $styleCell)->addText($node->consultant[0]->last_name
+            . ' ' . $node->consultant[0]->first_name . ' ' . $node->consultant[0]->patronymic, $fontStyle);
+        $table->addCell(1000, $styleCell)->addText($node->student[0]->name_section, $fontStyle);
+        $table->addCell(1000, $styleCell)->addText($node->date_protect, $fontStyle);
+        $i++;
+    }
+    $objWriter = PHPWord_IOFactory::createWriter($PHPWord, 'Word2007');
+    $file = 'archive/' . $year . '/list_themes_group_' . $_GET['group'] . '_' . $year . '.docx';
+    $objWriter->save($file);
+    header("Cache-Control: public");
+    header("Content-Description: File Transfer");
+    header("Content-Disposition: attachment; filename=list_themes_group_"
+        . $_GET['group'] . "_" . $year . ".docx");
+    header("Content-Type: application/zip");
+    header("Content-Transfer-Encoding: binary");
+    readfile($file);
 }

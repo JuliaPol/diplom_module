@@ -50,6 +50,13 @@ function archive_diploma_menu()
         'access arguments' => array('administer archive module'),
         'type' => MENU_CALLBACK);
 
+    $items ['archive/download/student_list'] = array(
+        'title' => 'Скачать список тем ВКР',
+        'description' => 'Скачать список тем ВКР',
+        'page callback' => 'archive_download_themes_doc',
+        'access arguments' => array('administer archive module'),
+        'type' => MENU_CALLBACK);
+
     $items ['archive/direction/all'] = array(
         'title' => 'Список направлений',
         'description' => 'Список направлений',
@@ -57,10 +64,39 @@ function archive_diploma_menu()
         'access arguments' => array('administer archive module'),
         'type' => MENU_CALLBACK);
 
+    $items ['archive/direction'] = array(
+        'title' => 'Направление',
+        'description' => 'Направление',
+        'page callback' => 'archive_direction',
+        'access arguments' => array('administer archive module'),
+        'type' => MENU_CALLBACK);
+
     $items ['archive/download/statistics/directions'] = array(
         'title' => 'Скачать статистику по направлениям',
         'description' => 'Скачать статистику по направлениям',
         'page callback' => 'create_excel_report_for_directions',
+        'access arguments' => array('administer archive module'),
+        'type' => MENU_CALLBACK);
+
+
+    $items ['archive/download/statistics/direction'] = array(
+        'title' => 'Скачать статистику по направлению',
+        'description' => 'Скачать статистику по направлению',
+        'page callback' => 'create_excel_report_for_direction',
+        'access arguments' => array('administer archive module'),
+        'type' => MENU_CALLBACK);
+
+    $items ['archive/download/group/stud_list'] = array(
+        'title' => 'Скачать список студентов по группам',
+        'description' => 'Скачать список студентов по группам',
+        'page callback' => 'download_archive_stud_list_by_group',
+        'access arguments' => array('administer archive module'),
+        'type' => MENU_CALLBACK);
+
+    $items ['archive/download/originality'] = array(
+        'title' => 'Скачать протокол проверки на самостоятельность выполнения ВКР',
+        'description' => 'Скачать протокол проверки на самостоятельность выполнения ВКР',
+        'page callback' => 'download_protocol_with_originality',
         'access arguments' => array('administer archive module'),
         'type' => MENU_CALLBACK);
     return $items;
@@ -82,6 +118,10 @@ function archive_diploma_theme()
             'file' => 'archive_diploma.theme.inc',
         ),
         'directions' => array(
+            'render element' => 'form',
+            'file' => 'archive_diploma.theme.inc',
+        ),
+        'group' => array(
             'render element' => 'form',
             'file' => 'archive_diploma.theme.inc',
         ),

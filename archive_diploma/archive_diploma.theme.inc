@@ -113,3 +113,32 @@ function theme_directions($vars) {
     $output .= drupal_render_children($form);
     return $output;
 }
+
+function theme_group($vars) {
+    $form = $vars['form'];
+    $rows = array();
+    foreach (element_children($form) as $id) {
+        if (isset($form[$id])) {
+            $rows[] = array(
+                'data' => array(
+                    drupal_render($form[$id]['group_number']),
+                    drupal_render($form[$id]['count_stud']),
+                    drupal_render($form[$id]['creation_year']),
+                    drupal_render($form[$id]['email']),
+                    drupal_render($form[$id]['stud_list']),
+                    drupal_render($form[$id]['originality']),
+                ),
+                'class' => array(),
+            );
+        }
+    }
+
+    $output = theme('table', array(
+        'header' => $form['#header'],
+        'rows'  => $rows,
+        'empty' => t('Table is empty', array()),
+    ));
+
+    $output .= drupal_render_children($form);
+    return $output;
+}

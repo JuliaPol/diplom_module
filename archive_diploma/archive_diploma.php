@@ -95,6 +95,34 @@ function fill_diploma_table($form, $nodes, $header)
     return $form['theme_table'];
 }
 
+function get_themes_by_year_and_group($year, $group)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('diplom', 'th')
+        ->extend('PagerDefault')
+        ->extend('TableSort');
+    $query1->innerJoin('teacher_student_diplom', 'dip', 'dip.id_theme = th.id_diplom AND th.`year` = dip.`year`');
+    $query1->leftJoin('student', 's', 'dip.id_student = s.id_student AND s.`year` = dip.`year`');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
+    $query1->fields('th')
+        ->fields('dip')
+        ->fields('d', array('direction_code', 'direction_name'))
+        ->condition('th.`year`', $year)
+        ->condition('g.group_number', $group)
+        ->limit(10)
+        ->orderBy('g.group_number', 'DESC');
+    $themes = $query1->execute()
+        ->fetchAll();
+    foreach ($themes as $nid => $value) {
+        $themes[$nid]->teacher = get_teacher_by_id_archive($value->id_teacher, $value->year);
+        $themes[$nid]->student = get_student_by_id_archive($value->id_student, $value->year);
+        $themes[$nid]->consultant = get_consultant_from_company_by_student_id($value->id_student, $value->year);
+    }
+    db_set_active();
+    return $themes;
+}
+
 function get_themes_by_year_and_direction($year, $direction)
 {
     db_set_active('archive_db');

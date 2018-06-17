@@ -1,5 +1,18 @@
 <?php
 
+function get_member_sec_by_role_archive($role, $year)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('member_sec', 'm');
+    $query1->fields('m')
+        ->condition('m.role', $role)
+        ->condition('m.`year`', $year);
+    $member = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $member;
+}
+
 function get_all_directions_archive()
 {
     db_set_active('archive_db');
@@ -12,7 +25,8 @@ function get_all_directions_archive()
     return $directions;
 }
 
-function get_direction_archive_by_group($group_number, $year) {
+function get_direction_archive_by_group($group_number, $year)
+{
     db_set_active('archive_db');
     $query1 = db_select('stud_group', 'g');
     $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND g.`year` = d.`year`');
@@ -178,6 +192,23 @@ function get_best_diplomas($dir_code, $year)
     return $themes;
 }
 
+function get_protect_date_by_direction($dir_code, $year)
+{
+    db_set_active('archive_db');
+    $query1 = db_select('teacher_student_diplom', 'dip');
+    $query1->leftJoin('student', 's', 'dip.id_student = s.id_student AND s.`year` = dip.`year`');
+    $query1->leftJoin('stud_group', 'g', 'g.id_group = s.id_group AND g.`year` = s.`year`');
+    $query1->leftJoin('direction', 'd', 'g.id_direction = d.id_direction AND d.`year` = g.`year`');
+    $query1->fields('dip')
+        ->condition('dip.`year`', $year)
+        ->condition('d.direction_code', $dir_code)
+        ->groupBy('d.direction_code');
+    $dates = $query1->execute()
+        ->fetchAll();
+    db_set_active();
+    return $dates;
+}
+
 function archive_all_directions()
 {
     return drupal_get_form('archive_all_directions_page');
@@ -281,6 +312,22 @@ function archive_direction_page($form, &$form_state)
         );
     }
 
+    $form['dates'] = array(
+        '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+        '#title' => 'Даты защит',
+    );
+
+    $dates = get_protect_date_by_direction($direction[0]->direction_code, $_GET['year']);
+
+    foreach ($dates as $nid => $date) {
+        $link_date = l(t($date->date_protect), 'archive/download/date_protect', array('query' =>
+            array('dir_code' => $direction[0]->direction_code, 'year' => $_GET['year'], 'date' => $date->date_protect)));
+        $form['dates'][$nid] = array(
+            '#markup' => $link_date,
+        );
+    }
     return $form;
 }
 
@@ -490,7 +537,7 @@ function download_archive_stud_list_by_group()
     $PHPWord->addFontStyle('TitleStyle', array('bold' => true, 'align' => 'center', 'size' => 14));
 
     $section->addText('Темы ВКР и научные руководители, ' . ($_GET['year'] - 1) . ' - ' . $_GET['year']
-        . ' уч. год ' . $direction[0]->direction_code . ' - ' . $direction[0]->direction_name . ', гр '.$_GET['group'], 'TitleStyle');
+        . ' уч. год ' . $direction[0]->direction_code . ' - ' . $direction[0]->direction_name . ', гр ' . $_GET['group'], 'TitleStyle');
 
 
     $styleTable = array('borderSize' => 6, 'borderColor' => '000', 'cellMargin' => 80);
@@ -531,6 +578,140 @@ function download_archive_stud_list_by_group()
     header("Cache-Control: public");
     header("Content-Description: File Transfer");
     header("Content-Disposition: attachment; filename=list_themes_group_"
+        . $_GET['group'] . "_" . $year . ".docx");
+    header("Content-Type: application/zip");
+    header("Content-Transfer-Encoding: binary");
+    readfile($file);
+}
+
+function download_list_with_date_protect()
+{
+    require_once '/sites/all/libraries/Classes/PHPWord.php';
+    $PHPWord = new PHPWord();
+    $PHPWord->setDefaultFontName('Times New Roman');
+    $section = $PHPWord->createSection();
+
+    if (empty($_GET['year']))
+        $_GET['year'] = date('Y');
+    if (empty($_GET['group']))
+        $_GET['group'] = 1;
+
+    $PHPWord->addFontStyle('TitleStyle', array('bold' => true, 'align' => 'center', 'size' => 14));
+
+    $styleTable = array('borderSize' => 6, 'borderColor' => '000', 'cellMargin' => 80);
+    $fontStyle = array('bold' => true, 'align' => 'center');
+    $PHPWord->addTableStyle('myOwnTableStyle', $styleTable);
+    $table = $section->addTable('myOwnTableStyle');
+
+    $direction = get_direction_archive_by_id($_GET['dir_code'], $_GET['year']);
+    $group = get_themes_by_year_and_date_protect($_GET['year'], $_GET['date']);
+
+    //TODO: бакалавры или магистры
+    $table->addRow(900);
+    $table->addCell(5000, $styleCell)->addText($_GET['date'].' бакалавры '.'гр.'.$group[0]->group_number, $fontStyle);
+    $table->addRow(900);
+    $table->addCell(5000, $styleCell)->addText('Направление '.$direction[0]->direction_code.' - '
+        .$direction[0]->direction_name, $fontStyle);
+    $table->addRow(900);
+    $table->addCell(1500, $styleCell)->addText('Ф.И.О.', $fontStyle);
+    $table->addCell(2500, $styleCell)->addText('Наименование темы', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('Руководитель', $fontStyle);
+    $table->addCell(1000, $styleCell)->addText('оценки', $fontStyle);
+    $table->addRow(900);
+    $table->addCell(1500, $styleCell)->addText('', $fontStyle);
+    $table->addCell(2500, $styleCell)->addText('', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('', $fontStyle);
+    $table->addCell(500, $styleCell)->addText('отл', $fontStyle);
+    $table->addCell(500, $styleCell)->addText('хор', $fontStyle);
+    $table->addCell(500, $styleCell)->addText('удовл', $fontStyle);
+    $table->addCell(500, $styleCell)->addText('рук', $fontStyle);
+    $table->addCell(500, $styleCell)->addText('рец', $fontStyle);
+    $table->addCell(500, $styleCell)->addText('пров', $fontStyle);
+    $table->addCell(500, $styleCell)->addText('ГАК', $fontStyle);
+
+    $i = 1;
+    foreach ($group as $node) {
+        $table->addRow(900);
+        $table->addCell(1500, $styleCell)->addText($node->student[0]->last_name . ' '
+            . $node->student[0]->first_name . ' ' . $node->student[0]->patronymic, $fontStyle);
+        $table->addCell(2500, $styleCell)->addText($node->diplom_name, $fontStyle);
+        $table->addCell(1500, $styleCell)->addText($node->teacher[0]->last_name . ' '
+            . $node->teacher[0]->first_name . ' ' . $node->teacher[0]->patronymic, $fontStyle);
+        $table->addCell(500, $styleCell)->addText($node->student[0]->sum_5, $fontStyle);
+        $table->addCell(500, $styleCell)->addText($node->student[0]->sum_4, $fontStyle);
+        $table->addCell(500, $styleCell)->addText($node->student[0]->sum_3, $fontStyle);
+        $table->addCell(500, $styleCell)->addText($node->teacher_evaluation, $fontStyle);
+        $table->addCell(500, $styleCell)->addText($node->reviewer_evaluation, $fontStyle);
+        $table->addCell(500, $styleCell)->addText($node->consultant_evaluation, $fontStyle);
+        $table->addCell(500, $styleCell)->addText($node->final_evaluation, $fontStyle);
+    }
+    $objWriter = PHPWord_IOFactory::createWriter($PHPWord, 'Word2007');
+    $file = 'archive/' . $year . '/protocol_with_protect_date_' . $_GET['date'] .'.docx';
+    $objWriter->save($file);
+    header("Cache-Control: public");
+    header("Content-Description: File Transfer");
+    header("Content-Disposition: attachment; filename=protocol_with_protect_date_"
+        . $_GET['date'] . ".docx");
+    header("Content-Type: application/zip");
+    header("Content-Transfer-Encoding: binary");
+    readfile($file);
+}
+
+function download_protocol_with_originality()
+{
+    require_once '/sites/all/libraries/Classes/PHPWord.php';
+    $PHPWord = new PHPWord();
+    $PHPWord->setDefaultFontName('Times New Roman');
+    $section = $PHPWord->createSection();
+
+    if (empty($_GET['year']))
+        $_GET['year'] = date('Y');
+    if (empty($_GET['group']))
+        $_GET['group'] = 1;
+
+    $PHPWord->addFontStyle('TitleStyle', array('bold' => true, 'align' => 'center', 'size' => 14));
+
+    $section->addText('Протокол проверки выпускных квалификационных работ на самостоятельность выполнения', 'TitleStyle');
+    $section->addText('Факультет: КТИ   Кафедра МО ЭВМ  Группа ' . $_GET['group'], 'contentStyle', 'Justify');
+
+    $styleTable = array('borderSize' => 6, 'borderColor' => '000', 'cellMargin' => 80);
+    $fontStyle = array('bold' => true, 'align' => 'center');
+    $PHPWord->addTableStyle('myOwnTableStyle', $styleTable);
+    $table = $section->addTable('myOwnTableStyle');
+
+    $table->addRow(900);
+
+    $table->addCell(500, $styleCell)->addText('№', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('ФИО', $fontStyle);
+    $table->addCell(2500, $styleCell)->addText('Тема', $fontStyle);
+    $table->addCell(1500, $styleCell)->addText('Эксперт', $fontStyle);
+    $table->addCell(1000, $styleCell)->addText('% оригинальности', $fontStyle);
+    $table->addCell(1000, $styleCell)->addText('подпись', $fontStyle);
+    $table->addCell(1000, $styleCell)->addText('примечания', $fontStyle);
+
+    $group = get_themes_by_year_and_group($_GET['year'], $_GET['group']);
+    $member_sec = get_member_sec_by_role_archive('Секретарь ГЭК', $_GET['year']);
+
+    $i = 1;
+    foreach ($group as $node) {
+        $table->addRow(900);
+        $table->addCell(500, $styleCell)->addText($i, $fontStyle);
+        $table->addCell(1500, $styleCell)->addText($node->student[0]->last_name . ' '
+            . $node->student[0]->first_name . ' ' . $node->student[0]->patronymic, $fontStyle);
+        $table->addCell(2500, $styleCell)->addText($node->diplom_name, $fontStyle);
+        $table->addCell(1500, $styleCell)->addText($member_sec[0]->last_name.' '.$member_sec[0]->first_name
+            .' '.$member_sec[0]->patronymic, $fontStyle);
+        $table->addCell(1000, $styleCell)->addText($node->percent_originality, $fontStyle);
+        $table->addCell(1000, $styleCell)->addText('', $fontStyle);
+        $table->addCell(1000, $styleCell)->addText('', $fontStyle);
+        $i++;
+    }
+    $objWriter = PHPWord_IOFactory::createWriter($PHPWord, 'Word2007');
+    $file = 'archive/' . $year . '/protocol_with_originality_group_' . $_GET['group'] . '_' . $year . '.docx';
+    $objWriter->save($file);
+    header("Cache-Control: public");
+    header("Content-Description: File Transfer");
+    header("Content-Disposition: attachment; filename=protocol_with_originality_"
         . $_GET['group'] . "_" . $year . ".docx");
     header("Content-Type: application/zip");
     header("Content-Transfer-Encoding: binary");

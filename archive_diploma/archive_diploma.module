@@ -99,6 +99,13 @@ function archive_diploma_menu()
         'page callback' => 'download_protocol_with_originality',
         'access arguments' => array('administer archive module'),
         'type' => MENU_CALLBACK);
+
+    $items ['archive/download/date_protect'] = array(
+        'title' => 'Скачать список студентов по конкретному дню защиты',
+        'description' => 'Скачать список студентов по конкретному дню защиты',
+        'page callback' => 'download_list_with_date_protect',
+        'access arguments' => array('administer archive module'),
+        'type' => MENU_CALLBACK);
     return $items;
 }
 
